@@ -10,9 +10,12 @@ import {
   isOctoberBatchSeeded,
   seedGrowthBatchAction,
   isGrowthBatchSeeded,
+  seedCommentaryBatchAction,
+  isCommentaryBatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
+import { COMMENTARY_BATCH, COMMENTARY_START_WEEK } from "@/lib/seed-data/commentaryBatch";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 
@@ -36,18 +39,21 @@ type CalendarItem = {
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
-  const [brand, items, octBatchSeeded, growthBatchSeeded] = await Promise.all([
+  const [brand, items, octBatchSeeded, growthBatchSeeded, commentaryBatchSeeded] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
     isOctoberBatchSeeded(),
     isGrowthBatchSeeded(),
+    isCommentaryBatchSeeded(),
   ]);
 
-  const growthStartDate = (() => {
+  const weekDate = (weekOffset: number) => {
     const d = new Date(`${BASE_DATE}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + GROWTH_START_WEEK * 7);
+    d.setUTCDate(d.getUTCDate() + weekOffset * 7);
     return d.toISOString().slice(0, 10);
-  })();
+  };
+  const growthStartDate = weekDate(GROWTH_START_WEEK);
+  const commentaryStartDate = weekDate(COMMENTARY_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -138,6 +144,29 @@ export default async function CalendarPage() {
           <form action={seedGrowthBatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import growth batch ({GROWTH_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-8">
+        <h3 className="font-heading text-xl mb-2">Commentary batch: {COMMENTARY_BATCH.length} scripts, 11 source-formats</h3>
+        <p className="text-xs text-muted mb-3">
+          &quot;X said this in their book/interview -- here&apos;s my take,&quot; expanded into 11 distinct formats so it
+          never reads as one repeated template: book concepts, interview themes, research studies, historical business
+          cases, contrarian takes, two-thinkers-disagree, a concept through one of your own deals, quote deconstructions,
+          shareholder-letter reactions, podcast/documentary reactions, and old-proverb-vs-modern-data. TOFU{" "}
+          {COMMENTARY_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {COMMENTARY_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {COMMENTARY_BATCH.filter((s) => s.funnelStage === "bofu").length} · effort default-heavy since context-setting
+          takes real setup · scheduled weekly starting {commentaryStartDate}, continuing right after the growth batch.
+        </p>
+        {commentaryBatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedCommentaryBatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import commentary batch ({COMMENTARY_BATCH.length} scripts)
             </button>
           </form>
         )}

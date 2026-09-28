@@ -5,6 +5,7 @@ import { sql, ensureSchema } from "./db";
 import { updateBrand, BrandConfig } from "./brand";
 import { BASE_DATE, BATCH_TAG, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "./seed-data/octBatch";
 import { GROWTH_START_WEEK, GROWTH_BATCH_TAG, GROWTH_BATCH } from "./seed-data/growthBatch";
+import { COMMENTARY_START_WEEK, COMMENTARY_BATCH_TAG, COMMENTARY_BATCH } from "./seed-data/commentaryBatch";
 
 function val(fd: FormData, key: string, fallback = "") {
   const v = fd.get(key);
@@ -379,4 +380,101 @@ export async function seedGrowthBatch() {
 
 export async function seedGrowthBatchAction() {
   await seedGrowthBatch();
+}
+
+// ---------- Commentary batch (50 scripts, weekly, continuing from COMMENTARY_START_WEEK) ----------
+export async function isCommentaryBatchSeeded(): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${COMMENTARY_BATCH_TAG}`;
+  return rows.length > 0;
+}
+
+export async function seedCommentaryBatch() {
+  await ensureSchema();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${COMMENTARY_BATCH_TAG}`;
+  if (already.length > 0) {
+    revalidatePath("/calendar");
+    return { alreadySeeded: true as const, count: 0 };
+  }
+
+  const calendarRows = COMMENTARY_BATCH.map((s) => ({
+    date: addDays(BASE_DATE, (COMMENTARY_START_WEEK + s.weekOffset) * 7),
+    pillar: s.pillar,
+    concept_bucket: s.conceptBucket,
+    content_type: s.contentType,
+    topic: s.title,
+    angle: s.angle,
+    format: s.format,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "scripted",
+    notes: `Commentary batch -- source: ${s.sourceType} (${s.sourceRef}) -- effort: ${s.effort}. Full script in Script Studio.`,
+  }));
+
+  const scriptRows = COMMENTARY_BATCH.map((s) => ({
+    title: s.title,
+    pillar: s.pillar,
+    content_type: s.contentType,
+    angle_or_story_type: s.angle,
+    format: s.format,
+    body_black: s.bodyBlack,
+    body_red: s.bodyRed,
+    body_green: s.bodyGreen,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "draft",
+    series_name: s.seriesName ?? "",
+  }));
+
+  await sql`
+    INSERT INTO calendar_items ${sql(
+      calendarRows,
+      "date",
+      "pillar",
+      "concept_bucket",
+      "content_type",
+      "topic",
+      "angle",
+      "format",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "notes"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO scripts ${sql(
+      scriptRows,
+      "title",
+      "pillar",
+      "content_type",
+      "angle_or_story_type",
+      "format",
+      "body_black",
+      "body_red",
+      "body_green",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "series_name"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO brand_config (key, value) VALUES (${COMMENTARY_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: COMMENTARY_BATCH.length })})
+    ON CONFLICT (key) DO NOTHING
+  `;
+
+  revalidatePath("/calendar");
+  revalidatePath("/scripts");
+  revalidatePath("/production");
+  revalidatePath("/funnel");
+  revalidatePath("/");
+
+  return { alreadySeeded: false as const, count: COMMENTARY_BATCH.length };
+}
+
+export async function seedCommentaryBatchAction() {
+  await seedCommentaryBatch();
 }
