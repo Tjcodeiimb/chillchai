@@ -16,6 +16,8 @@ import {
   isNewCategoriesBatchSeeded,
   seedNewCategories2BatchAction,
   isNewCategories2BatchSeeded,
+  seedNewCategories3BatchAction,
+  isNewCategories3BatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
@@ -23,6 +25,7 @@ import { COMMENTARY_BATCH, COMMENTARY_START_WEEK } from "@/lib/seed-data/comment
 import { SEGMENTS_BATCH, SEGMENTS_START_WEEK } from "@/lib/seed-data/segmentsBatch";
 import { NEW_CATEGORIES_BATCH, NEW_CATEGORIES_START_WEEK } from "@/lib/seed-data/newCategoriesBatch";
 import { NEW_CATEGORIES_2_BATCH, NEW_CATEGORIES_2_START_WEEK } from "@/lib/seed-data/newCategoriesBatch2";
+import { NEW_CATEGORIES_3_BATCH, NEW_CATEGORIES_3_START_WEEK } from "@/lib/seed-data/newCategoriesBatch3";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 import CalendarClient, { type CalendarItem } from "./CalendarClient";
@@ -41,6 +44,7 @@ export default async function CalendarPage() {
     segmentsBatchSeeded,
     newCategoriesBatchSeeded,
     newCategories2BatchSeeded,
+    newCategories3BatchSeeded,
   ] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
@@ -50,6 +54,7 @@ export default async function CalendarPage() {
     isSegmentsBatchSeeded(),
     isNewCategoriesBatchSeeded(),
     isNewCategories2BatchSeeded(),
+    isNewCategories3BatchSeeded(),
   ]);
 
   const weekDate = (weekOffset: number) => {
@@ -62,6 +67,7 @@ export default async function CalendarPage() {
   const segmentsStartDate = weekDate(SEGMENTS_START_WEEK);
   const newCategoriesStartDate = weekDate(NEW_CATEGORIES_START_WEEK);
   const newCategories2StartDate = weekDate(NEW_CATEGORIES_2_START_WEEK);
+  const newCategories3StartDate = weekDate(NEW_CATEGORIES_3_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -119,7 +125,8 @@ export default async function CalendarPage() {
               segmentsBatchSeeded,
               newCategoriesBatchSeeded,
               newCategories2BatchSeeded,
-            ].filter(Boolean).length} of 6 imported
+              newCategories3BatchSeeded,
+            ].filter(Boolean).length} of 7 imported
           </span>
         </summary>
         <div className="px-5 pb-5 space-y-5">
@@ -268,6 +275,30 @@ export default async function CalendarPage() {
           <form action={seedNewCategories2BatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import new categories batch, Phase 2 ({NEW_CATEGORIES_2_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          New categories batch, Phase 3: {NEW_CATEGORIES_3_BATCH.length} scripts, 7 more sub-categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Continuing the coverage expansion: Pricing Strategy &amp; Value-Based Fees, Market Entry Risk Assessment,
+          Cross-Cultural Business Communication, Financial Modeling &amp; Unit Economics, Hiring &amp; Team Building
+          for Founders, Crisis Management &amp; Pivoting, and Brand Positioning &amp; Messaging Strategy -- 4 scripts
+          each. TOFU {NEW_CATEGORIES_3_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {NEW_CATEGORIES_3_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {NEW_CATEGORIES_3_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {newCategories3StartDate}, continuing right after Phase 2.
+        </p>
+        {newCategories3BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedNewCategories3BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import new categories batch, Phase 3 ({NEW_CATEGORIES_3_BATCH.length} scripts)
             </button>
           </form>
         )}
