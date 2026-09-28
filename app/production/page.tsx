@@ -5,6 +5,8 @@ import { Card, SectionHeader, Badge } from "../components/ui";
 import ShotListClient from "./ShotListClient";
 import FolderNamer from "./FolderNamer";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductionPage() {
   const brand = await getBrand();
   const scripts = await sql<

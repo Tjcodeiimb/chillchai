@@ -22,6 +22,8 @@ type Outlier = {
   used: boolean;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ResearchPage() {
   const brand = await getBrand();
   const rows = await sql<Outlier[]>`SELECT * FROM outlier_research ORDER BY created_at DESC`;

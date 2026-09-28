@@ -14,6 +14,8 @@ type Post = {
   notes: string;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AnalyticsPage() {
   const brand = await getBrand();
   const posts = await sql<Post[]>`SELECT * FROM own_posts ORDER BY posted_date DESC`;

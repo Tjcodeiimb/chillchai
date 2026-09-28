@@ -9,6 +9,8 @@ function levelFor(followers: number) {
   return { level: 3, floor: 10000, ceil: 100000, name: "Personal Brand (10k -> 100k)" };
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const brand = await getBrand();
   const level = levelFor(brand.followerCount);

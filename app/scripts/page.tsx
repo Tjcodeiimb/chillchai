@@ -3,6 +3,8 @@ import { getBrand } from "@/lib/brand";
 import { SectionHeader } from "../components/ui";
 import ScriptsClient from "./ScriptsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ScriptsPage() {
   const brand = await getBrand();
   const scripts = await sql`SELECT * FROM scripts ORDER BY created_at DESC`;

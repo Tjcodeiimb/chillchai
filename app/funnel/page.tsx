@@ -5,6 +5,8 @@ import CaptionGenerator from "./CaptionGenerator";
 
 type Item = { id: number; topic: string; funnel_stage: string; cta_type: string; status: string };
 
+export const dynamic = "force-dynamic";
+
 export default async function FunnelPage() {
   const brand = await getBrand();
   const items = await sql<Item[]>`

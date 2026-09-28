@@ -21,6 +21,8 @@ type CalendarItem = {
   notes: string;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function CalendarPage() {
   const brand = await getBrand();
   const items = await sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`;
