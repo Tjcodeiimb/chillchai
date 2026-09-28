@@ -7,6 +7,7 @@ import { BASE_DATE, BATCH_TAG, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "./seed
 import { GROWTH_START_WEEK, GROWTH_BATCH_TAG, GROWTH_BATCH } from "./seed-data/growthBatch";
 import { COMMENTARY_START_WEEK, COMMENTARY_BATCH_TAG, COMMENTARY_BATCH } from "./seed-data/commentaryBatch";
 import { SEGMENTS_START_WEEK, SEGMENTS_BATCH_TAG, SEGMENTS_BATCH } from "./seed-data/segmentsBatch";
+import { NEW_CATEGORIES_START_WEEK, NEW_CATEGORIES_BATCH_TAG, NEW_CATEGORIES_BATCH } from "./seed-data/newCategoriesBatch";
 
 function val(fd: FormData, key: string, fallback = "") {
   const v = fd.get(key);
@@ -658,6 +659,7 @@ export async function backfillScriptMetadataAction() {
     ...GROWTH_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.subniche, segment: "" })),
     ...COMMENTARY_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: "", segment: s.sourceType })),
     ...SEGMENTS_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.topicTag, segment: s.segment })),
+    ...NEW_CATEGORIES_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.topicTag, segment: "" })),
   ];
 
   if (rows.length > 0) {
@@ -681,4 +683,117 @@ export async function backfillScriptMetadataAction() {
   revalidatePath("/calendar");
   revalidatePath("/scripts");
   revalidatePath("/production");
+}
+
+// ---------- New categories batch (28 scripts, weekly, continuing from NEW_CATEGORIES_START_WEEK) ----------
+// Phase 1 of the requested content-coverage expansion: 7 new sub-categories,
+// 4 scripts each. Deliberately small and self-contained -- more phases can
+// follow the same pattern (own data file, own tag, own button) without
+// touching this one.
+export async function isNewCategoriesBatchSeeded(): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_BATCH_TAG}`;
+  return rows.length > 0;
+}
+
+export async function seedNewCategoriesBatch() {
+  await ensureSchema();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_BATCH_TAG}`;
+  if (already.length > 0) {
+    revalidatePath("/calendar");
+    return { alreadySeeded: true as const, count: 0 };
+  }
+
+  const calendarRows = NEW_CATEGORIES_BATCH.map((s) => ({
+    date: addDays(BASE_DATE, (NEW_CATEGORIES_START_WEEK + s.weekOffset) * 7),
+    pillar: s.pillar,
+    concept_bucket: s.conceptBucket,
+    content_type: s.contentType,
+    topic: s.title,
+    angle: s.angle,
+    format: s.format,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "scripted",
+    notes: `New categories batch (Phase 1) -- topic: ${s.topicTag} -- effort: ${s.effort}. Full script in Script Studio.`,
+    effort: s.effort,
+    topic_tag: s.topicTag,
+    segment: "",
+  }));
+
+  const scriptRows = NEW_CATEGORIES_BATCH.map((s) => ({
+    title: s.title,
+    pillar: s.pillar,
+    content_type: s.contentType,
+    angle_or_story_type: s.angle,
+    format: s.format,
+    body_black: s.bodyBlack,
+    body_red: s.bodyRed,
+    body_green: s.bodyGreen,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "draft",
+    series_name: s.seriesName ?? "",
+    effort: s.effort,
+    topic_tag: s.topicTag,
+    segment: "",
+  }));
+
+  await sql`
+    INSERT INTO calendar_items ${sql(
+      calendarRows,
+      "date",
+      "pillar",
+      "concept_bucket",
+      "content_type",
+      "topic",
+      "angle",
+      "format",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "notes",
+      "effort",
+      "topic_tag",
+      "segment"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO scripts ${sql(
+      scriptRows,
+      "title",
+      "pillar",
+      "content_type",
+      "angle_or_story_type",
+      "format",
+      "body_black",
+      "body_red",
+      "body_green",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "series_name",
+      "effort",
+      "topic_tag",
+      "segment"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_BATCH.length })})
+    ON CONFLICT (key) DO NOTHING
+  `;
+
+  revalidatePath("/calendar");
+  revalidatePath("/scripts");
+  revalidatePath("/production");
+  revalidatePath("/funnel");
+  revalidatePath("/");
+
+  return { alreadySeeded: false as const, count: NEW_CATEGORIES_BATCH.length };
+}
+
+export async function seedNewCategoriesBatchAction() {
+  await seedNewCategoriesBatch();
 }
