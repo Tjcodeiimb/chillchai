@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { sql, ensureSchema } from "./db";
 import { updateBrand, BrandConfig } from "./brand";
-import { BASE_DATE, BATCH_TAG, OCT_2026_BATCH } from "./seed-data/octBatch";
+import { BASE_DATE, BATCH_TAG, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "./seed-data/octBatch";
 
 function val(fd: FormData, key: string, fallback = "") {
   const v = fd.get(key);
@@ -199,7 +199,9 @@ export async function seedOctoberBatch() {
     return { alreadySeeded: true as const, count: 0 };
   }
 
-  const calendarRows = OCT_2026_BATCH.map((s) => ({
+  const fullBatch = [...OCT_2026_BATCH, ...OCT_2026_BATCH_EXT];
+
+  const calendarRows = fullBatch.map((s) => ({
     date: addDays(BASE_DATE, s.weekOffset * 7),
     pillar: s.pillar,
     concept_bucket: s.conceptBucket,
@@ -213,7 +215,7 @@ export async function seedOctoberBatch() {
     notes: `Oct 2026 batch -- effort: ${s.effort}${s.seriesName ? ` -- series: ${s.seriesName}` : ""}. Full script in Script Studio.`,
   }));
 
-  const scriptRows = OCT_2026_BATCH.map((s) => ({
+  const scriptRows = fullBatch.map((s) => ({
     title: s.title,
     pillar: s.pillar,
     content_type: s.contentType,
@@ -264,7 +266,7 @@ export async function seedOctoberBatch() {
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: OCT_2026_BATCH.length })})
+    INSERT INTO brand_config (key, value) VALUES (${BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: fullBatch.length })})
     ON CONFLICT (key) DO NOTHING
   `;
 
@@ -274,7 +276,7 @@ export async function seedOctoberBatch() {
   revalidatePath("/funnel");
   revalidatePath("/");
 
-  return { alreadySeeded: false as const, count: OCT_2026_BATCH.length };
+  return { alreadySeeded: false as const, count: fullBatch.length };
 }
 
 export async function seedOctoberBatchAction() {

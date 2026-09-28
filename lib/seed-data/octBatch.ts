@@ -596,3 +596,289 @@ export const OCT_2026_BATCH: BatchScript[] = [
     ctaLine: "Comment 60DAYS and I'll DM you the 5-company scoring framework we use for Days 1-10.",
   },
 ];
+
+// Extension batch: 15 more scripts, added after the first 30 held up against
+// a self-audit run on SCRIPT_CRAFT_RULES (hedge-word scan, funnel/CTA
+// matching). Continues the weekly cadence from week 30. Mix: TOFU 7 / MOFU 5
+// / BOFU 3, effort low 5 / default 5 / high 5. No new series -- the
+// signature series was delivered in the first 30.
+export const OCT_2026_BATCH_EXT: BatchScript[] = [
+  {
+    weekOffset: 30,
+    title: "3 Marketing Channels I'd Never Use to Enter a New Market",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Myth Bust / Common Mistake",
+    format: "Reaction Format",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "low",
+    bodyBlack:
+      "Channel 1: paid social with zero local audience data yet. 8 out of 10 wasted spend -- you're paying to learn what a free customer interview would've told you.\nChannel 2: influencer partnerships before you have a single case study. 7 out of 10 -- an influencer sells proof, and you don't have any yet.\nChannel 3: SEO content in a market where your customers don't search in English. 9 out of 10 -- wrong language, wrong channel, no traffic.",
+    bodyRed:
+      "React to each channel logo/graphic on screen with a visible wince or head shake.\nHold up the rating number card after each one.",
+    bodyGreen:
+      "On-screen channel logo/graphic for each one as it's named.\nFreeze-frame + rating stamp after each line.",
+    ctaLine: "Follow for the 3 channels I'd actually start with instead.",
+  },
+  {
+    weekOffset: 31,
+    title: "3 Levels of Founder Focus",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Educational Tip / Hack",
+    format: "Shot / Angle Changes",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "low",
+    bodyBlack:
+      "Level 1: working on whatever feels urgent today. Reactive, exhausting, rarely moves the business.\nLevel 2: working from a weekly priority list. Better -- but the list itself is rarely questioned.\nLevel 3: working on the ONE metric that unlocks the next stage of the business, and saying no to everything else that week.\nMost founders I meet are stuck switching between Level 1 and Level 2, and wonder why growth feels slow.",
+    bodyRed:
+      "Change camera angle every ~2 seconds as each level is introduced, same as the market-research levels format.\nHold up one finger per level.",
+    bodyGreen:
+      "On-screen text: \"LEVEL 1 / 2 / 3\" stamped per level.\nEnd card: \"Which level are you actually operating at this week?\"",
+    ctaLine: "Follow for how I pick the ONE metric each week with clients.",
+  },
+  {
+    weekOffset: 32,
+    title: "Smart Marketer vs Dumb Marketer: Entering a New Market",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Comparison",
+    format: "Clone Format",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "low",
+    bodyBlack:
+      "Dumb marketer: runs the exact same ad creative that worked at home.\nSmart marketer: rebuilds the creative around what THIS market finds funny, urgent, or trustworthy -- those aren't universal.\nDumb marketer: measures success by impressions.\nSmart marketer: measures success by cost per qualified conversation, from day one.",
+    bodyRed:
+      "Clone format -- two versions of yourself, opposite reactions to each line.\nDumb Marketer shrugs confidently; Smart Marketer nods with a notebook in hand.",
+    bodyGreen:
+      "Split-screen labels: \"DUMB MARKETER\" / \"SMART MARKETER\".\nOn-screen text: \"cost per qualified conversation\" bolded.",
+    ctaLine: "Follow for how I set up that metric before spending a rupee on ads.",
+  },
+  {
+    weekOffset: 33,
+    title: "The Finance Mistake That Kills Market Entry Budgets",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Educational Tip / Hack",
+    format: "Voiceover Format",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "default",
+    bodyBlack:
+      "Most market-entry budgets die from one finance mistake, and it's not overspending.\nIt's building a single budget for the whole launch instead of splitting it into a test tranche and a scale tranche.\nThe test tranche should be small enough that losing all of it doesn't threaten the business -- its only job is proving the model works.\nThe scale tranche only gets released once the test tranche proves a specific number: cost to acquire a customer below what that customer is worth.\nFounders who skip this split either spend too cautiously to ever learn anything, or bet the whole budget on an unproven model.",
+    bodyRed: "No on-camera talking -- voiceover only.\nCut to relevant b-roll for each beat.",
+    bodyGreen:
+      "B-roll: a budget spreadsheet splitting into two visible buckets, a simple bar chart of \"cost to acquire\" vs \"customer value.\"\nOn-screen text: \"test tranche\" / \"scale tranche\" labels.",
+    ctaLine: "Follow -- next week I'm breaking down how I size the test tranche.",
+  },
+  {
+    weekOffset: 34,
+    title: "Do vs Don't: Building Your First Product for a New Market",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Do vs Don't (Right vs Wrong)",
+    format: "Setting Changes",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "default",
+    bodyBlack:
+      "Don't: translate your existing product's marketing and call it done. Do: rebuild the offer around the specific problem that market feels most urgently.\nDon't: assume the feature your home market loves most will matter here. Do: ask 10 local users what they'd pay for BEFORE you decide what to build first.\nDon't: launch every feature at once to \"look complete.\" Do: launch the one feature that solves the most urgent problem, and let the rest earn its place later.",
+    bodyRed:
+      "Switch physical location for each Do/Don't pair, same visual language as the investor-pitch Do/Don't video.\nFlatter delivery for \"Don't,\" energized for \"Do.\"",
+    bodyGreen:
+      "On-screen text: \"DON'T\" in red, \"DO\" in green for each pair.\nZoom on \"10 local users\" for emphasis.",
+    ctaLine: "Follow for the 10-user interview script I use before any product decision.",
+  },
+  {
+    weekOffset: 35,
+    title: "The People-Psychology Trick Behind Every Successful Local Partnership",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Educational Tip / Hack",
+    format: "Voiceover Format",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "high",
+    bodyBlack:
+      "Every local partnership I've seen work shares one thing, and it's not the contract terms.\nIt's called reciprocity priming: the partner who gives something real and useful BEFORE asking for anything gets dramatically better terms and faster trust than the one who leads with the pitch.\nI've watched two founders approach the exact same distributor -- one opened with \"here's a free market analysis of your current gaps,\" the other opened with a partnership deck. The first got a meeting in 3 days. The second waited 6 weeks for a reply.\nThis isn't about being generous for its own sake -- it's a specific, repeatable sequence: give something narrow and useful first, let them reciprocate the interest, THEN bring the ask.\nMost founders skip straight to the ask because it feels efficient. It's actually the slower path.",
+    bodyRed:
+      "No on-camera talking -- voiceover carries the explanation, paired with relevant b-roll (a handshake, two documents side by side).\nLet a brief pause sit after each contrasting outcome (\"3 days\" / \"6 weeks\") before continuing.",
+    bodyGreen:
+      "On-screen text: \"reciprocity priming\" defined briefly.\nOn-screen text: \"3 days\" vs \"6 weeks\" as a direct side-by-side stat.",
+    ctaLine: "Follow -- more of the psychology behind deals that actually close.",
+  },
+  {
+    weekOffset: 36,
+    title: "The Hidden Financial Signal That Predicts If a Product Will Sell in a New Market",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Framework / Formula / Acronym",
+    format: "Whiteboard Format",
+    funnelStage: "tofu",
+    ctaType: "follow",
+    conceptBucket: "proven",
+    effort: "high",
+    bodyBlack:
+      "Before I trust any market-entry pitch, I check one number nobody talks about: the local savings rate.\nHere's why it predicts more than demand surveys ever do: a high-savings market will delay a purchase decision even when they want the product, because spending itself carries more psychological friction there.\nThat single number changes 3 things in a go-to-market plan: your pricing structure should favor installments over lump sums, your sales cycle should be budgeted longer than a low-savings market, and your messaging should lead with risk-reduction, not aspiration.\nI've watched two nearly identical product launches -- same category, same price -- succeed in one market and stall in another, and the savings-rate gap explained almost the entire difference.\nThis is the first number I pull before any client engagement starts.",
+    bodyRed:
+      "Draw a simple 2-column comparison on the whiteboard: high-savings market vs low-savings market, filling in each of the 3 changes.\nCircle \"savings rate\" at the top for emphasis.",
+    bodyGreen:
+      "On-screen text reinforcing each of the 3 changes as it's introduced.\nFinal shot: whiteboard fully filled, both columns visible side by side.",
+    ctaLine: "Follow -- next week I'm walking through how to actually find this number for your target market.",
+  },
+  {
+    weekOffset: 37,
+    title: "The Marketing Channel Audit I Run Before Every Launch",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Educational Tip / Hack",
+    format: "Green Screen Format",
+    funnelStage: "mofu",
+    ctaType: "engagement",
+    conceptBucket: "proven",
+    effort: "low",
+    bodyBlack:
+      "Before any client spends on marketing, I run 3 checks.\nCheck 1: where is this market's target customer already spending attention -- not where you assume, where the data says.\nCheck 2: which of those channels can you actually measure cost-per-conversion on, not only reach.\nCheck 3: which one channel, if it worked, would you double down on for the next 90 days.\nComment \"AUDIT\" and I'll DM you the 1-page channel scorecard we use for this.",
+    bodyRed:
+      "Green screen behind you showing a simple channel icon grid.\nDirect eye contact on the CTA line.",
+    bodyGreen: "On-screen text: each of the 3 checks as it's said.\nComment prompt: \"Comment AUDIT\".",
+    ctaLine: "Comment AUDIT and I'll DM you the 1-page channel scorecard.",
+  },
+  {
+    weekOffset: 38,
+    title: "How I Build a Go-to-Market Budget (Real Numbers)",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Framework / Formula / Acronym",
+    format: "Whiteboard Format",
+    funnelStage: "mofu",
+    ctaType: "engagement",
+    conceptBucket: "proven",
+    effort: "default",
+    bodyBlack:
+      "Every go-to-market budget I build has the same 3 buckets, in this order.\nBucket 1: validation spend -- small, fast, only proves the model. Usually 10-15% of the total budget.\nBucket 2: channel scale spend -- released only after validation hits its target number, not on a calendar date.\nBucket 3: a 20% reserve that stays untouched until week 8, because the first surprise always shows up by then.\nComment \"BUDGET\" and I'll send you the spreadsheet template with these 3 buckets built in.",
+    bodyRed:
+      "Draw the 3-bucket split on the whiteboard as a simple bar, filling in percentages as you explain.\nCircle \"20% reserve\" for emphasis.",
+    bodyGreen: "On-screen text for each bucket and its percentage.\nComment prompt: \"Comment BUDGET\".",
+    ctaLine: "Comment BUDGET and I'll send you the 3-bucket spreadsheet template.",
+  },
+  {
+    weekOffset: 39,
+    title: "3 Questions That Reveal If a Product Needs Localizing",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Educational Tip / Hack",
+    format: "Q&A Format",
+    funnelStage: "mofu",
+    ctaType: "engagement",
+    conceptBucket: "proven",
+    effort: "default",
+    bodyBlack:
+      "Question 1: \"Does the core problem this product solves even exist here, or does this market solve it a completely different way already?\" If it's already solved differently, you need more than a translation.\nQuestion 2: \"Would a local competitor's version embarrass ours on price, speed, or trust?\" Any yes means localize before launch, not after.\nQuestion 3: \"What's the one feature a local user would consider non-negotiable that we don't have?\" That answer tells you exactly where to start.\nComment \"LOCALIZE\" and I'll send you the full localization checklist we run with product teams.",
+    bodyRed:
+      "Off-camera interviewer asks each question, you answer directly to camera.\nBrief pause before each answer -- let the question land.",
+    bodyGreen: "On-screen text for each question as it's asked.\nComment prompt: \"Comment LOCALIZE\".",
+    ctaLine: "Comment LOCALIZE and I'll send you the full localization checklist.",
+  },
+  {
+    weekOffset: 40,
+    title: "What Being a 19-Year-Old Founder Taught Me About Being Underestimated",
+    pillar: "journey",
+    contentType: "storytelling",
+    angle: "Lesson Story",
+    format: "Voiceover Format",
+    funnelStage: "mofu",
+    ctaType: "engagement",
+    conceptBucket: "proven",
+    effort: "high",
+    bodyBlack:
+      "At 19, I sat across from a client twice my age who asked, in the first five minutes, if I'd ever actually run a business.\nMy instinct was to defend myself -- list credentials, prove I belonged in the room. I didn't. I asked him what his last consultant got wrong instead.\nHe talked for ten minutes. Everything he described was a scoping problem, not an expertise problem -- exactly the failure mode I'd already built a process for.\nThe lesson: being underestimated isn't a disadvantage if you stop trying to out-argue it and start letting the work answer the question instead.\nI still get that same look in first meetings sometimes. I stopped defending against it years ago. Comment \"YOUNG\" and I'll tell you exactly how I handle it now.",
+    bodyRed:
+      "Voiceover over relevant b-roll -- an early photo from client meetings if available, or a simple two-chairs-at-a-table shot.\nLet a beat of silence sit after \"I didn't\" before continuing.",
+    bodyGreen:
+      "On-screen text: \"Age 19\" at the opening.\nComment prompt: \"Comment YOUNG\".",
+    ctaLine: "Comment YOUNG and I'll tell you exactly how I handle that moment now.",
+  },
+  {
+    weekOffset: 41,
+    title: "The Product Decision That Cost Us a $25,000 Client",
+    pillar: "journey",
+    contentType: "storytelling",
+    angle: "Loss Story",
+    format: "Voiceover Format",
+    funnelStage: "mofu",
+    ctaType: "engagement",
+    conceptBucket: "proven",
+    effort: "high",
+    bodyBlack:
+      "We lost a $25,000 client over a decision that took us five minutes to make and should have taken five days.\nA client wanted us to skip the discovery phase and go straight to execution, to save time. We agreed, because saying no to a client that early felt risky.\nSix weeks in, the plan we built didn't fit their actual regulatory situation -- something discovery would have caught immediately. They pulled the engagement, and the fee went with it.\nWhat changed after that: discovery is no longer optional, ever, no matter how confident a client is that they don't need it. I tell every new client this story before they even ask to skip it.\nComment \"DISCOVERY\" and I'll send you the exact 5 questions discovery has to answer before we'll move to execution with anyone.",
+    bodyRed:
+      "No on-camera talking -- voiceover over relevant b-roll (a crossed-out project timeline, an old client email if usable).\nLet a pause sit after \"the fee went with it\" before continuing.",
+    bodyGreen:
+      "On-screen text: \"$25,000\" bolded at the opening.\nComment prompt: \"Comment DISCOVERY\".",
+    ctaLine: "Comment DISCOVERY and I'll send you the 5 questions discovery has to answer before we move to execution.",
+  },
+  {
+    weekOffset: 42,
+    title: "The 1 Financial Number That Tells Me a Founder Is Ready to Scale",
+    pillar: "authority",
+    contentType: "educational",
+    angle: "Educational Tip / Hack",
+    format: "Multitasking Format",
+    funnelStage: "bofu",
+    ctaType: "manychat",
+    conceptBucket: "proven",
+    effort: "low",
+    bodyBlack:
+      "One number tells me if a founder is ready to scale: is your cost to acquire a customer trending down as you spend more, or up?\nTrending down means you've found a real, repeatable channel -- that's ready to scale.\nTrending up means you were riding a lucky early audience, and scaling now only scales the losses.\nIf you know your number and it's trending down, comment \"SCALE\" and I'll DM you the framework we use to size the next budget tranche.",
+    bodyRed:
+      "Deliver this while doing a real task in frame -- casual, unscripted energy, same as the red/green flags video.\nDirect look to camera on the CTA line.",
+    bodyGreen: "On-screen text: the question itself, large and bold.\nComment prompt: \"Comment SCALE\".",
+    ctaLine: "Comment SCALE and I'll DM you the framework we use to size the next budget tranche.",
+  },
+  {
+    weekOffset: 43,
+    title: "The Exact Budget Template We Build With Every New Client",
+    pillar: "authority",
+    contentType: "authority",
+    angle: "Framework / Formula / Acronym",
+    format: "Visual Format",
+    funnelStage: "bofu",
+    ctaType: "manychat",
+    conceptBucket: "proven",
+    effort: "default",
+    bodyBlack:
+      "Every client gets the same budget template on day one, no exceptions.\nRow 1: validation spend, capped and time-boxed.\nRow 2: the specific number validation has to hit before Row 3 unlocks.\nRow 3: scale spend, released only after Row 2 is hit.\nRow 4: a reserve that nobody touches until week 8.\nIf you want to see this template before your next launch, comment \"TEMPLATE\" and I'll DM it to you.",
+    bodyRed:
+      "Use a physical printed template or spreadsheet prop, point to each row as you explain it.\nTap Row 4 specifically for emphasis.",
+    bodyGreen: "On-screen text for each row as it's introduced.\nComment prompt: \"Comment TEMPLATE\".",
+    ctaLine: "Comment TEMPLATE and I'll DM you the exact budget template.",
+  },
+  {
+    weekOffset: 44,
+    title: "If I Were Hired to Fix a Failing Product Launch in 30 Days",
+    pillar: "authority",
+    contentType: "authority",
+    angle: "Transformation",
+    format: "Whiteboard Format",
+    funnelStage: "bofu",
+    ctaType: "manychat",
+    conceptBucket: "proven",
+    effort: "high",
+    bodyBlack:
+      "If a founder hired me today with a launch that's already failing, here's exactly what the first 30 days would look like.\nDays 1-5: stop all spend. Every dollar going to a channel you haven't proven yet is funding the failure faster, nothing else.\nDays 6-15: talk to 10 people who tried the product and didn't come back. Not surveys -- real conversations, and write down their exact words.\nDays 16-25: fix the ONE thing that came up in at least 6 of those 10 conversations. Not the loudest complaint -- the most repeated one.\nDays 26-30: relaunch to a small, specific audience first, and only scale spend again once that fix actually moves the number.\nThis is the exact triage process we run. Comment \"TRIAGE\" and I'll DM you the 10-conversation interview script we use for Days 6-15.",
+    bodyRed:
+      "Draw the 30-day timeline on the whiteboard as a single line, marking each phase.\nCircle \"10 people\" and \"6 of those 10\" for emphasis at the relevant beats.",
+    bodyGreen: "On-screen text for each day range as it's introduced.\nComment prompt: \"Comment TRIAGE\".",
+    ctaLine: "Comment TRIAGE and I'll DM you the 10-conversation interview script for Days 6-15.",
+  },
+];
