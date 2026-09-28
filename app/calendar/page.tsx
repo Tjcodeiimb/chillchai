@@ -14,12 +14,15 @@ import {
   isSegmentsBatchSeeded,
   seedNewCategoriesBatchAction,
   isNewCategoriesBatchSeeded,
+  seedNewCategories2BatchAction,
+  isNewCategories2BatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
 import { COMMENTARY_BATCH, COMMENTARY_START_WEEK } from "@/lib/seed-data/commentaryBatch";
 import { SEGMENTS_BATCH, SEGMENTS_START_WEEK } from "@/lib/seed-data/segmentsBatch";
 import { NEW_CATEGORIES_BATCH, NEW_CATEGORIES_START_WEEK } from "@/lib/seed-data/newCategoriesBatch";
+import { NEW_CATEGORIES_2_BATCH, NEW_CATEGORIES_2_START_WEEK } from "@/lib/seed-data/newCategoriesBatch2";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 import CalendarClient, { type CalendarItem } from "./CalendarClient";
@@ -29,16 +32,25 @@ const FULL_OCT_BATCH = [...OCT_2026_BATCH, ...OCT_2026_BATCH_EXT];
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
-  const [brand, items, octBatchSeeded, growthBatchSeeded, commentaryBatchSeeded, segmentsBatchSeeded, newCategoriesBatchSeeded] =
-    await Promise.all([
-      getBrand(),
-      sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
-      isOctoberBatchSeeded(),
-      isGrowthBatchSeeded(),
-      isCommentaryBatchSeeded(),
-      isSegmentsBatchSeeded(),
-      isNewCategoriesBatchSeeded(),
-    ]);
+  const [
+    brand,
+    items,
+    octBatchSeeded,
+    growthBatchSeeded,
+    commentaryBatchSeeded,
+    segmentsBatchSeeded,
+    newCategoriesBatchSeeded,
+    newCategories2BatchSeeded,
+  ] = await Promise.all([
+    getBrand(),
+    sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
+    isOctoberBatchSeeded(),
+    isGrowthBatchSeeded(),
+    isCommentaryBatchSeeded(),
+    isSegmentsBatchSeeded(),
+    isNewCategoriesBatchSeeded(),
+    isNewCategories2BatchSeeded(),
+  ]);
 
   const weekDate = (weekOffset: number) => {
     const d = new Date(`${BASE_DATE}T00:00:00Z`);
@@ -49,6 +61,7 @@ export default async function CalendarPage() {
   const commentaryStartDate = weekDate(COMMENTARY_START_WEEK);
   const segmentsStartDate = weekDate(SEGMENTS_START_WEEK);
   const newCategoriesStartDate = weekDate(NEW_CATEGORIES_START_WEEK);
+  const newCategories2StartDate = weekDate(NEW_CATEGORIES_2_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -99,9 +112,14 @@ export default async function CalendarPage() {
         <summary className="cursor-pointer select-none px-5 py-4 font-heading text-xl flex items-center justify-between">
           <span>Import content batches</span>
           <span className="text-xs text-muted font-sans font-normal">
-            {[octBatchSeeded, growthBatchSeeded, commentaryBatchSeeded, segmentsBatchSeeded, newCategoriesBatchSeeded].filter(
-              Boolean
-            ).length} of 5 imported
+            {[
+              octBatchSeeded,
+              growthBatchSeeded,
+              commentaryBatchSeeded,
+              segmentsBatchSeeded,
+              newCategoriesBatchSeeded,
+              newCategories2BatchSeeded,
+            ].filter(Boolean).length} of 6 imported
           </span>
         </summary>
         <div className="px-5 pb-5 space-y-5">
@@ -226,6 +244,30 @@ export default async function CalendarPage() {
           <form action={seedNewCategoriesBatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import new categories batch ({NEW_CATEGORIES_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          New categories batch, Phase 2: {NEW_CATEGORIES_2_BATCH.length} scripts, 7 more sub-categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Continuing the coverage expansion: Networking &amp; Relationship Building, Public Speaking &amp; Presentation
+          Skills, Legal &amp; Contract Fundamentals, Fundraising &amp; Investor Relations, Operations &amp; Process
+          Systems, Competitive Strategy &amp; Positioning, and Mental Resilience &amp; Performance -- 4 scripts each.
+          TOFU {NEW_CATEGORIES_2_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {NEW_CATEGORIES_2_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {NEW_CATEGORIES_2_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {newCategories2StartDate}, continuing right after Phase 1.
+        </p>
+        {newCategories2BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedNewCategories2BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import new categories batch, Phase 2 ({NEW_CATEGORIES_2_BATCH.length} scripts)
             </button>
           </form>
         )}
