@@ -18,6 +18,12 @@ import {
   isNewCategories2BatchSeeded,
   seedNewCategories3BatchAction,
   isNewCategories3BatchSeeded,
+  seedNewCategories4BatchAction,
+  isNewCategories4BatchSeeded,
+  seedNewCategories5BatchAction,
+  isNewCategories5BatchSeeded,
+  seedNewCategories6BatchAction,
+  isNewCategories6BatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
@@ -26,6 +32,9 @@ import { SEGMENTS_BATCH, SEGMENTS_START_WEEK } from "@/lib/seed-data/segmentsBat
 import { NEW_CATEGORIES_BATCH, NEW_CATEGORIES_START_WEEK } from "@/lib/seed-data/newCategoriesBatch";
 import { NEW_CATEGORIES_2_BATCH, NEW_CATEGORIES_2_START_WEEK } from "@/lib/seed-data/newCategoriesBatch2";
 import { NEW_CATEGORIES_3_BATCH, NEW_CATEGORIES_3_START_WEEK } from "@/lib/seed-data/newCategoriesBatch3";
+import { NEW_CATEGORIES_4_BATCH, NEW_CATEGORIES_4_START_WEEK } from "@/lib/seed-data/newCategoriesBatch4";
+import { NEW_CATEGORIES_5_BATCH, NEW_CATEGORIES_5_START_WEEK } from "@/lib/seed-data/newCategoriesBatch5";
+import { NEW_CATEGORIES_6_BATCH, NEW_CATEGORIES_6_START_WEEK } from "@/lib/seed-data/newCategoriesBatch6";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 import CalendarClient, { type CalendarItem } from "./CalendarClient";
@@ -45,6 +54,9 @@ export default async function CalendarPage() {
     newCategoriesBatchSeeded,
     newCategories2BatchSeeded,
     newCategories3BatchSeeded,
+    newCategories4BatchSeeded,
+    newCategories5BatchSeeded,
+    newCategories6BatchSeeded,
   ] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
@@ -55,6 +67,9 @@ export default async function CalendarPage() {
     isNewCategoriesBatchSeeded(),
     isNewCategories2BatchSeeded(),
     isNewCategories3BatchSeeded(),
+    isNewCategories4BatchSeeded(),
+    isNewCategories5BatchSeeded(),
+    isNewCategories6BatchSeeded(),
   ]);
 
   const weekDate = (weekOffset: number) => {
@@ -68,6 +83,9 @@ export default async function CalendarPage() {
   const newCategoriesStartDate = weekDate(NEW_CATEGORIES_START_WEEK);
   const newCategories2StartDate = weekDate(NEW_CATEGORIES_2_START_WEEK);
   const newCategories3StartDate = weekDate(NEW_CATEGORIES_3_START_WEEK);
+  const newCategories4StartDate = weekDate(NEW_CATEGORIES_4_START_WEEK);
+  const newCategories5StartDate = weekDate(NEW_CATEGORIES_5_START_WEEK);
+  const newCategories6StartDate = weekDate(NEW_CATEGORIES_6_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -126,7 +144,10 @@ export default async function CalendarPage() {
               newCategoriesBatchSeeded,
               newCategories2BatchSeeded,
               newCategories3BatchSeeded,
-            ].filter(Boolean).length} of 7 imported
+              newCategories4BatchSeeded,
+              newCategories5BatchSeeded,
+              newCategories6BatchSeeded,
+            ].filter(Boolean).length} of 10 imported
           </span>
         </summary>
         <div className="px-5 pb-5 space-y-5">
@@ -302,6 +323,72 @@ export default async function CalendarPage() {
             </button>
           </form>
         )}
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          New categories batch, Phase 4: {NEW_CATEGORIES_4_BATCH.length} scripts, 7 more sub-categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Continuing the coverage expansion: Customer Onboarding &amp; Retention Systems, Email &amp; Outreach Copywriting, Vendor &amp; Supplier Negotiation, Exit Planning &amp; Business Valuation, Board &amp; Advisor Management, Product-Market Fit Validation, and Cash Flow Management for Founders -- 4 scripts
+          each. TOFU {NEW_CATEGORIES_4_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {NEW_CATEGORIES_4_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {NEW_CATEGORIES_4_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {newCategories4StartDate}, continuing right after Phase 3.
+        </p>
+        {newCategories4BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedNewCategories4BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import new categories batch, Phase 4 ({NEW_CATEGORIES_4_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          New categories batch, Phase 5: {NEW_CATEGORIES_5_BATCH.length} scripts, 7 more sub-categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Continuing the coverage expansion: Go-to-Market Strategy Design, Content Marketing for B2B, Referral &amp; Word-of-Mouth Systems, Regulatory &amp; Compliance Navigation, Remote Team Culture &amp; Communication, Strategic Partnerships &amp; Joint Ventures, and Managing Scope Creep -- 4 scripts
+          each. TOFU {NEW_CATEGORIES_5_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {NEW_CATEGORIES_5_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {NEW_CATEGORIES_5_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {newCategories5StartDate}, continuing right after Phase 4.
+        </p>
+        {newCategories5BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedNewCategories5BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import new categories batch, Phase 5 ({NEW_CATEGORIES_5_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          New categories batch, Phase 6: {NEW_CATEGORIES_6_BATCH.length} scripts, 7 more sub-categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Continuing the coverage expansion: Customer Segmentation &amp; Targeting, Founder Time Audits &amp; Delegation, Investor Updates &amp; Reporting, Building Case Studies &amp; Social Proof, Automating Repetitive Business Tasks, Founder Wellbeing &amp; Sustainable Pace, and Long-Term Strategic Planning -- 4 scripts
+          each. TOFU {NEW_CATEGORIES_6_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {NEW_CATEGORIES_6_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {NEW_CATEGORIES_6_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {newCategories6StartDate}, continuing right after Phase 5.
+        </p>
+        {newCategories6BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedNewCategories6BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import new categories batch, Phase 6 ({NEW_CATEGORIES_6_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
       </Card>
         </div>
       </details>
