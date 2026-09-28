@@ -202,7 +202,7 @@ export function buildPromptLibraryDoc(brand: BrandConfig) {
   const exampleSubniche = brand.subniches[0] || "[SUB-NICHE]";
 
   const children: Paragraph[] = [
-    h1("chillchai — Master Prompt Library"),
+    h1("Upforge Content OS — Master Prompt Library"),
     p(`Generated for ${brand.nameField}. Every prompt below is pre-filled with your real brand context (niche, sub-niches, founder story, proprietary value) — replace the bracketed placeholders with your specifics and paste into Gemini, Claude, or ChatGPT.`),
   ];
 

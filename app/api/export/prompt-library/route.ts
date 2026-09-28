@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": `attachment; filename="chillchai-master-prompt-library.docx"`,
+      "Content-Disposition": `attachment; filename="upforge-master-prompt-library.docx"`,
     },
   });
 }

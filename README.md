@@ -1,4 +1,4 @@
-# chillchai — content pipeline OS
+# Upforge Content OS
 
 A personal content-operating-system for planning, researching, and scripting your next 60–100
 Instagram videos — built directly from your growth-blueprint playbook (hooks, outlier research,

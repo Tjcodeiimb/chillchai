@@ -15,7 +15,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "chillchai — Content Pipeline",
+  title: "Upforge Content OS",
   description: "Shardul's Instagram content operating system: calendar, hooks, scripts, research, and prompts, all in one place.",
 };
 

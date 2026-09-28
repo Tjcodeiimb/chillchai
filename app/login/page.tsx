@@ -12,8 +12,8 @@ export default async function LoginPage({
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-sm rounded-2xl border border-border/15 bg-card/60 p-8">
-        <div className="font-heading text-3xl mb-1">chillchai</div>
-        <p className="text-sm text-muted mb-6">content pipeline os</p>
+        <div className="font-heading text-3xl mb-1">Upforge</div>
+        <p className="text-sm text-muted mb-6">content os</p>
 
         {!configured ? (
           <p className="text-sm text-muted">
