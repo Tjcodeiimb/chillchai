@@ -17,6 +17,52 @@ CTA: ${SCRIPT_CRAFT_RULES.cta.join(" ")}
 Length: ${SCRIPT_CRAFT_RULES.length.join(" ")}`;
 }
 
+// Agentic single-prompt scaffold (research-backed: Self-Refine / phase-tagged
+// reasoning / grouped constraints with primacy+recency). There's no real
+// multi-turn tool loop here -- the user pastes this whole block into
+// Claude/ChatGPT/Gemini -- so the only lever for getting research -> draft ->
+// self-critique -> revise behavior out of a single-pass model is explicit
+// phase tags that forbid skipping ahead, plus a persona-switch on the
+// critique step (a model grading its own work in the same voice is a weaker
+// critic than one told to switch roles). Constraints are grouped
+// (hard/style/format) rather than one flat list, since compositional
+// constraint-following degrades non-linearly past ~7-10 flat items, and the
+// most important rules are repeated at both the start and the end (primacy +
+// recency) rather than stated once in the middle where they're most likely
+// to be dropped.
+function agenticScriptScaffold(opts: {
+  hardConstraints: string[];
+  styleGuidelines: string[];
+  outputFormatSpec: string;
+  retentionPlanFields: string[];
+}) {
+  const hard = opts.hardConstraints.map((c, i) => `${i + 1}. ${c}`).join("\n");
+  return `Work through this in 4 explicit phases, in order. Do not skip ahead to Phase 4 without visibly completing 1-3 -- the phases are your working process, not optional scaffolding.
+
+<hard_constraints>
+(Non-negotiable. A script violating any of these needs a rewrite, not a note.)
+${hard}
+</hard_constraints>
+
+<style_guidelines>
+(Soft preferences -- follow unless a hard constraint above overrides them.)
+${opts.styleGuidelines.map((g) => `- ${g}`).join("\n")}
+</style_guidelines>
+
+PHASE 1 -- <retention_plan>: Before writing a single line of the script, reason through:
+${opts.retentionPlanFields.map((f) => `- ${f}`).join("\n")}
+Output this reasoning as a short bulleted plan. Every line of the script you write in Phase 2 must map back to something in this plan -- don't write freeform and retrofit a plan afterward.
+
+PHASE 2 -- <draft_v1>: Write a complete first draft following the retention plan and the output format spec below.
+
+PHASE 3 -- <self_critique>: Switch roles. You are now a ruthless short-form video editor reviewing a stranger's draft, not the person who wrote it. Find at least 3 concrete, specific flaws -- quote the exact line and name the failure (weak/slow hook, a hard constraint violated, a dead pacing stretch, a mismatched CTA, generic language that could apply to any creator). Do not praise anything here; this phase only exists to find what's wrong.
+
+PHASE 4 -- <final_script>: Revise draft_v1 to fix every flaw found in Phase 3. Before outputting, re-read the result against every item in hard_constraints above, one by one, and confirm each is satisfied -- fix anything that isn't. Then output ONLY the final script, in this exact format:
+${opts.outputFormatSpec}
+
+Only <final_script> is the deliverable. Phases 1-3 are your reasoning, not part of the answer -- but do the work, don't jump straight to Phase 4.`;
+}
+
 function brandContext(brand: BrandConfig) {
   return `You are helping ${brand.nameField}, ${brand.occupation}.
 Niche: ${brand.niche}
@@ -89,6 +135,35 @@ Reality check from real results -- ${REACH_VS_CONVERSION_EXAMPLE.complex.label}:
   const historicalMediaNote =
     opts.pillar === "journey" ? `\nIf this touches a past event/period, remind me in the GREEN notes: ${HISTORICAL_MEDIA_TIP}` : "";
 
+  const hookLine = opts.hookStack
+    ? `Use this hook stack -- Written: "${opts.hookStack.written}" | Verbal: "${opts.hookStack.verbal}" | Visual: "${opts.hookStack.visual}"`
+    : "Open with a strong written + verbal hook you construct yourself.";
+
+  const hardConstraints = [
+    "Verbal hook lands by 1.0-1.5s -- no logo, no \"hey guys,\" no setup sentence before it. One clause, ≤10 words, ideally a specific number.",
+    `CTA type is "${opts.ctaType ?? "follow"}" and matches the funnel stage (${opts.funnelStage ?? "tofu"}) exactly -- ${ctaInstruction}`,
+    "No throat-clearing openers, hedge words (\"just,\" \"really,\" \"very,\" \"kind of,\" \"basically,\" \"I think\"), or restated setup anywhere in BLACK.",
+    "Every claim in BLACK is hyper-specific (a number, a name, a timeframe) -- never a generic statement that any creator in any niche could say.",
+    opts.hookStack
+      ? "The provided hook stack is used as given, not replaced with a new one."
+      : "The hook you construct is at least as specific as the GOOD example below, not a generic version of it.",
+  ];
+
+  const styleGuidelines = [
+    `Speaking pace 130-145 wpm baseline (slower end for consulting/educational density -- ideas need processing time).`,
+    `Pattern-interrupt cadence every 7-10s for measured/educational content, every 3-5s for fast/punchy formats.`,
+    `First-person founder voice, direct and specific, matching: ${brand.nameField.split("|")[0].trim()}.`,
+    depthInstruction || "Match depth to the funnel stage -- broader/simpler for TOFU, deeper for MOFU/BOFU.",
+  ];
+
+  const outputFormatSpec = `3 color-coded bullet groups, exactly like this, nothing before or after:
+BLACK (spoken dialogue, line by line):
+- ...
+RED (physical actions / camera movement instructions):
+- ...
+GREEN (editing / graphic instructions for the editor):
+- ...`;
+
   return `${brandContext(brand)}
 
 TASK: Write a full short-form video script (45-75 seconds spoken) for:
@@ -96,27 +171,26 @@ Pillar: ${opts.pillar}
 Content type: ${opts.contentType}
 Angle / story type: ${opts.angleOrStoryType}
 Topic: ${opts.topic}
-${opts.hookStack ? `Use this hook stack -- Written: "${opts.hookStack.written}" | Verbal: "${opts.hookStack.verbal}" | Visual: "${opts.hookStack.visual}"` : "Open with a strong written + verbal hook."}
+${hookLine}
 ${opts.format ? `Filming format: ${opts.format}` : ""}
-${depthInstruction}
 ${funnelInstruction}
-${ctaInstruction}
 ${historicalMediaNote}
 
-${craftRulesBlock()}
-
-Format the output in 3 color-coded bullet groups exactly like this:
-BLACK (spoken dialogue, line by line):
-- ...
-RED (physical actions / camera movement instructions):
-- ...
-GREEN (editing / graphic instructions for the editor):
-- ...
+${agenticScriptScaffold({
+    hardConstraints,
+    styleGuidelines,
+    outputFormatSpec,
+    retentionPlanFields: [
+      "hook_type -- which mechanism it uses (specific-outcome number, curiosity gap, pattern interrupt, self-relevance callout, or a combination)",
+      "hook_line_timed_to_3s -- the exact line, and confirm it's ≤10 words and lands the claim, not the setup",
+      "open_loops_and_timestamps -- every ~7-10s beat, what question or tension it opens, and what closes it",
+      "pacing_risk_points -- where in the 45-75s a viewer is most likely to drop off, and what specifically prevents it there",
+      "payoff_placement -- where the core value/insight actually lands, and why the CTA placement after it makes sense",
+    ],
+  })}
 
 GOOD script opening (specific, earns attention immediately): "3 years ago I lost my biggest client because I priced a market-entry project wrong by $40,000. Here's the exact pricing framework I built so it never happened again."
-BAD script opening (never write like this -- vague, no reason to keep watching): "Today I want to talk about something important in business that a lot of people don't think about enough."
-
-End with a single clear CTA line matching the CTA type and funnel stage above. Keep language hyper-specific, no fluff, in first-person founder voice.`;
+BAD script opening (never write like this -- vague, no reason to keep watching): "Today I want to talk about something important in business that a lot of people don't think about enough."`;
 }
 
 export function buildTranscriptTemplatizePrompt(transcript: string) {
