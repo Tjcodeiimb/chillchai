@@ -24,8 +24,10 @@ type CalendarItem = {
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
-  const brand = await getBrand();
-  const items = await sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`;
+  const [brand, items] = await Promise.all([
+    getBrand(),
+    sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
+  ]);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;

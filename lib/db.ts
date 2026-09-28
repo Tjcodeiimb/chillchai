@@ -34,15 +34,17 @@ export function ensureSchema(): Promise<void> {
   return schemaReady;
 }
 
+// One round trip for the whole schema instead of 7 sequential ones -- this
+// runs on every cold start, so it matters for perceived latency. `.simple()`
+// allows multiple statements in a single query since there are no dynamic
+// parameters here.
 async function initSchema() {
   await sql`
     CREATE TABLE IF NOT EXISTS brand_config (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
-    )
-  `;
+    );
 
-  await sql`
     CREATE TABLE IF NOT EXISTS calendar_items (
       id SERIAL PRIMARY KEY,
       date TEXT NOT NULL,
@@ -57,10 +59,8 @@ async function initSchema() {
       status TEXT NOT NULL DEFAULT 'idea',
       notes TEXT DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `;
+    );
 
-  await sql`
     CREATE TABLE IF NOT EXISTS outlier_research (
       id SERIAL PRIMARY KEY,
       source_type TEXT NOT NULL DEFAULT 'keyword',
@@ -76,10 +76,8 @@ async function initSchema() {
       notes TEXT DEFAULT '',
       used BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `;
+    );
 
-  await sql`
     CREATE TABLE IF NOT EXISTS hook_stacks (
       id SERIAL PRIMARY KEY,
       written TEXT DEFAULT '',
@@ -89,10 +87,8 @@ async function initSchema() {
       topic TEXT DEFAULT '',
       saved BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `;
+    );
 
-  await sql`
     CREATE TABLE IF NOT EXISTS scripts (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL DEFAULT 'Untitled script',
@@ -108,10 +104,8 @@ async function initSchema() {
       status TEXT NOT NULL DEFAULT 'draft',
       series_name TEXT DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `;
+    );
 
-  await sql`
     CREATE TABLE IF NOT EXISTS script_templates (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL DEFAULT 'Untitled template',
@@ -120,10 +114,8 @@ async function initSchema() {
       source_note TEXT DEFAULT '',
       template_text TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `;
+    );
 
-  await sql`
     CREATE TABLE IF NOT EXISTS own_posts (
       id SERIAL PRIMARY KEY,
       title TEXT DEFAULT '',
@@ -133,6 +125,6 @@ async function initSchema() {
       pillar TEXT DEFAULT 'authority',
       notes TEXT DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `;
+    );
+  `.simple();
 }

@@ -26,8 +26,10 @@ type Outlier = {
 export const dynamic = "force-dynamic";
 
 export default async function ResearchPage() {
-  const brand = await getBrand();
-  const rows = await sql<Outlier[]>`SELECT * FROM outlier_research ORDER BY created_at DESC`;
+  const [brand, rows] = await Promise.all([
+    getBrand(),
+    sql<Outlier[]>`SELECT * FROM outlier_research ORDER BY created_at DESC`,
+  ]);
   const keywordPrompt = buildKeywordBankPrompt(brand);
 
   const inputClass = "w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5";

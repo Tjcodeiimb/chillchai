@@ -17,8 +17,10 @@ type Post = {
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
-  const brand = await getBrand();
-  const posts = await sql<Post[]>`SELECT * FROM own_posts ORDER BY posted_date DESC`;
+  const [brand, posts] = await Promise.all([
+    getBrand(),
+    sql<Post[]>`SELECT * FROM own_posts ORDER BY posted_date DESC`,
+  ]);
 
   const withMultiple = posts.map((p) => ({
     ...p,

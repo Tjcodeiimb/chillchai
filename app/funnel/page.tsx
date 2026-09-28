@@ -8,10 +8,12 @@ type Item = { id: number; topic: string; funnel_stage: string; cta_type: string;
 export const dynamic = "force-dynamic";
 
 export default async function FunnelPage() {
-  const brand = await getBrand();
-  const items = await sql<Item[]>`
-    SELECT id, topic, funnel_stage, cta_type, status FROM calendar_items ORDER BY date ASC
-  `;
+  const [brand, items] = await Promise.all([
+    getBrand(),
+    sql<Item[]>`
+      SELECT id, topic, funnel_stage, cta_type, status FROM calendar_items ORDER BY date ASC
+    `,
+  ]);
 
   const stages: Item["funnel_stage"][] = ["tofu", "mofu", "bofu"];
 

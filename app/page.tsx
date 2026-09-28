@@ -12,28 +12,30 @@ function levelFor(followers: number) {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const brand = await getBrand();
+  const [brand, pillarCounts, conceptCounts, upcoming] = await Promise.all([
+    getBrand(),
+    sql<{ pillar: string; n: number }[]>`
+      SELECT pillar, COUNT(*)::int as n FROM calendar_items GROUP BY pillar
+    `,
+    sql<{ concept_bucket: string; n: number }[]>`
+      SELECT concept_bucket, COUNT(*)::int as n FROM calendar_items GROUP BY concept_bucket
+    `,
+    sql<{ id: number; date: string; topic: string; pillar: string; status: string }[]>`
+      SELECT * FROM calendar_items WHERE status != 'posted' ORDER BY date ASC LIMIT 6
+    `,
+  ]);
+
   const level = levelFor(brand.followerCount);
   const progressPct = Math.min(
     100,
     Math.round(((brand.followerCount - level.floor) / (level.ceil - level.floor)) * 100)
   );
 
-  const pillarCounts = await sql<{ pillar: string; n: number }[]>`
-    SELECT pillar, COUNT(*)::int as n FROM calendar_items GROUP BY pillar
-  `;
-  const conceptCounts = await sql<{ concept_bucket: string; n: number }[]>`
-    SELECT concept_bucket, COUNT(*)::int as n FROM calendar_items GROUP BY concept_bucket
-  `;
   const totalItems = pillarCounts.reduce((s, r) => s + r.n, 0);
 
   const authorityCount = pillarCounts.find((r) => r.pillar === "authority")?.n ?? 0;
   const authorityPct = totalItems ? Math.round((authorityCount / totalItems) * 100) : 0;
   const journeyPct = totalItems ? 100 - authorityPct : 0;
-
-  const upcoming = await sql<{ id: number; date: string; topic: string; pillar: string; status: string }[]>`
-    SELECT * FROM calendar_items WHERE status != 'posted' ORDER BY date ASC LIMIT 6
-  `;
 
   const links = [
     { href: "/brand", label: "Brand Foundation", desc: "Niche, story, visual identity, profile" },

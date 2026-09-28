@@ -25,9 +25,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${instrumentSerif.variable} ${jakarta.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex bg-background text-foreground">
+      <body className="min-h-full flex flex-col md:flex-row bg-background text-foreground">
         <Nav />
-        <main className="flex-1 min-w-0 px-6 py-8 md:px-10 md:py-10">{children}</main>
+        <main className="flex-1 min-w-0 px-4 py-6 md:px-10 md:py-10">{children}</main>
       </body>
     </html>
   );

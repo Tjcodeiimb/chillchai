@@ -6,9 +6,11 @@ import ScriptsClient from "./ScriptsClient";
 export const dynamic = "force-dynamic";
 
 export default async function ScriptsPage() {
-  const brand = await getBrand();
-  const scripts = await sql`SELECT * FROM scripts ORDER BY created_at DESC`;
-  const templates = await sql`SELECT * FROM script_templates ORDER BY created_at DESC`;
+  const [brand, scripts, templates] = await Promise.all([
+    getBrand(),
+    sql`SELECT * FROM scripts ORDER BY created_at DESC`,
+    sql`SELECT * FROM script_templates ORDER BY created_at DESC`,
+  ]);
 
   return (
     <div>

@@ -17,8 +17,10 @@ type HookStack = {
 export const dynamic = "force-dynamic";
 
 export default async function HooksPage() {
-  const brand = await getBrand();
-  const stacks = await sql<HookStack[]>`SELECT * FROM hook_stacks ORDER BY created_at DESC`;
+  const [brand, stacks] = await Promise.all([
+    getBrand(),
+    sql<HookStack[]>`SELECT * FROM hook_stacks ORDER BY created_at DESC`,
+  ]);
   const inputClass = "w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5";
   const selectClass = inputClass;
 

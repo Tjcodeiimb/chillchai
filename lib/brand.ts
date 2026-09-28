@@ -89,18 +89,29 @@ export const DEFAULT_BRAND: BrandConfig = {
     "Has real footage/photos from being depressed at 18 after failing entrance exams -- a ready-made Loss Story / Transformation Story anchor.",
 };
 
-async function ensureSeed() {
+// In-process cache -- brand config barely ever changes but is read on nearly
+// every page load, so avoid a round trip per request. Invalidated by
+// updateBrand(). Lives across requests within the same server instance
+// (same lifetime as the `sql` singleton in lib/db.ts).
+declare global {
+  var __chillchaiBrandCache: BrandConfig | undefined;
+}
+
+async function loadBrand(): Promise<BrandConfig> {
   await ensureSchema();
   const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = 'brand'`;
   if (rows.length === 0) {
     await sql`INSERT INTO brand_config (key, value) VALUES ('brand', ${JSON.stringify(DEFAULT_BRAND)})`;
+    return DEFAULT_BRAND;
   }
+  return { ...DEFAULT_BRAND, ...JSON.parse(rows[0].value) };
 }
 
 export async function getBrand(): Promise<BrandConfig> {
-  await ensureSeed();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = 'brand'`;
-  return { ...DEFAULT_BRAND, ...JSON.parse(rows[0].value) };
+  if (globalThis.__chillchaiBrandCache) return globalThis.__chillchaiBrandCache;
+  const brand = await loadBrand();
+  globalThis.__chillchaiBrandCache = brand;
+  return brand;
 }
 
 export async function updateBrand(partial: Partial<BrandConfig>): Promise<BrandConfig> {
@@ -110,5 +121,6 @@ export async function updateBrand(partial: Partial<BrandConfig>): Promise<BrandC
     INSERT INTO brand_config (key, value) VALUES ('brand', ${JSON.stringify(next)})
     ON CONFLICT (key) DO UPDATE SET value = excluded.value
   `;
+  globalThis.__chillchaiBrandCache = next;
   return next;
 }
