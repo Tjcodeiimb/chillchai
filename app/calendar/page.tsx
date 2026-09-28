@@ -2,12 +2,21 @@ import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { buildCalendarIdeationPrompt } from "@/lib/prompts";
 import { SCRIPT_ANGLES, FILMING_FORMATS, CTA_TYPES, FUNNEL_STAGES, CALENDAR_STATUSES, CONCEPT_BUCKETS } from "@/lib/reference";
-import { createCalendarItem, updateCalendarItemStatus, deleteCalendarItem, seedOctoberBatchAction, isOctoberBatchSeeded } from "@/lib/actions";
+import {
+  createCalendarItem,
+  updateCalendarItemStatus,
+  deleteCalendarItem,
+  seedOctoberBatchAction,
+  isOctoberBatchSeeded,
+  seedGrowthBatchAction,
+  isGrowthBatchSeeded,
+} from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
-
-const FULL_OCT_BATCH = [...OCT_2026_BATCH, ...OCT_2026_BATCH_EXT];
+import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
+
+const FULL_OCT_BATCH = [...OCT_2026_BATCH, ...OCT_2026_BATCH_EXT];
 
 type CalendarItem = {
   id: number;
@@ -27,11 +36,18 @@ type CalendarItem = {
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
-  const [brand, items, octBatchSeeded] = await Promise.all([
+  const [brand, items, octBatchSeeded, growthBatchSeeded] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
     isOctoberBatchSeeded(),
+    isGrowthBatchSeeded(),
   ]);
+
+  const growthStartDate = (() => {
+    const d = new Date(`${BASE_DATE}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + GROWTH_START_WEEK * 7);
+    return d.toISOString().slice(0, 10);
+  })();
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -96,6 +112,32 @@ export default async function CalendarPage() {
           <form action={seedOctoberBatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import Oct 2026 batch ({FULL_OCT_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-8">
+        <h3 className="font-heading text-xl mb-2">Growth batch: {GROWTH_BATCH.length} scripts across every sub-niche</h3>
+        <p className="text-xs text-muted mb-3">
+          A deliberate ratio, not a guess: TOFU {GROWTH_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {GROWTH_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {GROWTH_BATCH.filter((s) => s.funnelStage === "bofu").length} · effort low{" "}
+          {GROWTH_BATCH.filter((s) => s.effort === "low").length} / default{" "}
+          {GROWTH_BATCH.filter((s) => s.effort === "default").length} / high{" "}
+          {GROWTH_BATCH.filter((s) => s.effort === "high").length} · educational{" "}
+          {GROWTH_BATCH.filter((s) => s.contentType === "educational").length} / authority{" "}
+          {GROWTH_BATCH.filter((s) => s.contentType === "authority").length} (storytelling left for you) · every one of
+          the 9 sub-niches + the core niche gets exactly 10 scripts · 3 new signature series (&quot;Psychology of
+          Buying&quot;, &quot;Founder Finance 101&quot;, &quot;Consulting Insider&quot;) · scheduled weekly starting{" "}
+          {growthStartDate}, continuing right after the Oct 2026 batch.
+        </p>
+        {growthBatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedGrowthBatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import growth batch ({GROWTH_BATCH.length} scripts)
             </button>
           </form>
         )}
