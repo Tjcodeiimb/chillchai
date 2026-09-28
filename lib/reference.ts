@@ -313,6 +313,39 @@ export const TOOLS: ToolEntry[] = [
   },
 ];
 
+// Distilled from a 2026 research pass on what separates crisp, high-retention
+// short-form scripts from bloated/fluffy ones (see agent research, Sep 2026).
+// Used to tighten every script-generation prompt and as the checklist applied
+// when hand-writing scripts directly.
+export const SCRIPT_CRAFT_RULES = {
+  hook: [
+    "Verbal hook must land by 1.0s -- no logo, no \"hey guys,\" no brand name, no setup sentence before it.",
+    "Hook sentence is one clause, one claim, ≤10 words.",
+    "Use the specific-outcome pattern where possible: [bad number] → [good number] in [timeframe] using [thing]. Numbers beat vague claims.",
+    "Combine at least 2 of: pattern interrupt, emotional spike, curiosity gap, self-relevance callout (\"If you're a [specific audience]...\").",
+    "Never state that a topic will be discussed -- state the payoff or tension itself.",
+  ],
+  body: [
+    "One idea per video. Every example/beat must serve the single hook's promise -- no digressions.",
+    "Pattern-interrupt cadence every 7-10s for educational/consulting content (every 3-5s only for fast/punchy formats).",
+    "Place a reinforcement beat (mid-video re-hook/reframe) at roughly 25-40% and 60-75% of runtime.",
+    "Each body segment should close the prior open loop and immediately open a new one -- no flat beats.",
+    "Cut on sight: throat-clearing openers (\"So,\" \"Okay so,\" \"Today I want to talk about\"), hedges (\"just,\" \"really,\" \"very,\" \"kind of,\" \"I think,\" \"basically\"), redundant connectives (\"in order to\" → \"to\"), restated setup (\"as I mentioned\").",
+    "Target 130-145 wpm baseline (slower end for consulting/educational density -- ideas need processing time).",
+  ],
+  cta: [
+    "TOFU: no hard CTA, or one soft low-friction CTA at the very end only, tied to the video's specific topic (not generic \"follow me\"). Never interrupt pacing for a mid-video CTA on TOFU content.",
+    "MOFU: one CTA, can land mid- or end-video, framed as a value exchange (\"comment X and I'll send you the checklist\") -- not a sales ask.",
+    "BOFU: one explicit, specific CTA near the end naming the exact next step (link in bio, DM keyword, book a call). Never repeat/nag a CTA.",
+    "Never reuse the same CTA wording across all three funnel stages -- mismatched CTA-to-intent reads as fluff and kills trust.",
+  ],
+  length: [
+    "Runtime multiplier on script word count: talking-head/no b-roll ×0.95, mixed voiceover+b-roll ×0.85, visual-heavy/whiteboard/demo ×0.75 (at 130-145 wpm baseline).",
+    "~140-150 words for a tight 60s explainer; scale roughly linearly down to 35-75 words for a 15-30s reel.",
+    "Narrow the idea before shortening artificially -- a fully-resolved narrow claim beats a padded vague one at any length.",
+  ],
+};
+
 export const FIVE_X_OUTLIER_RULE =
   "An outlier is a reel from a small-to-midsize creator that got at least 5x more views than their total follower count. That's the bar for 'proven' before you model it.";
 

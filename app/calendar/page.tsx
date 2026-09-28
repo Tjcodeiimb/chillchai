@@ -2,7 +2,8 @@ import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { buildCalendarIdeationPrompt } from "@/lib/prompts";
 import { SCRIPT_ANGLES, FILMING_FORMATS, CTA_TYPES, FUNNEL_STAGES, CALENDAR_STATUSES, CONCEPT_BUCKETS } from "@/lib/reference";
-import { createCalendarItem, updateCalendarItemStatus, deleteCalendarItem } from "@/lib/actions";
+import { createCalendarItem, updateCalendarItemStatus, deleteCalendarItem, seedOctoberBatchAction, isOctoberBatchSeeded } from "@/lib/actions";
+import { BASE_DATE, OCT_2026_BATCH } from "@/lib/seed-data/octBatch";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 
@@ -24,9 +25,10 @@ type CalendarItem = {
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
-  const [brand, items] = await Promise.all([
+  const [brand, items, octBatchSeeded] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
+    isOctoberBatchSeeded(),
   ]);
 
   const total = items.length;
@@ -73,6 +75,29 @@ export default async function CalendarPage() {
           <PromptRunner prompt={ideationPrompt} label="Propose 12 topics" />
         </Card>
       </div>
+
+      <Card className="mb-8">
+        <h3 className="font-heading text-xl mb-2">Oct 2026 batch: {OCT_2026_BATCH.length} scripts, ready to schedule</h3>
+        <p className="text-xs text-muted mb-3">
+          Researched, fully written, and craft-checked against the crisp-script rules on the Master Prompt Library page.
+          TOFU {OCT_2026_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {OCT_2026_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {OCT_2026_BATCH.filter((s) => s.funnelStage === "bofu").length} · effort low{" "}
+          {OCT_2026_BATCH.filter((s) => s.effort === "low").length} / default{" "}
+          {OCT_2026_BATCH.filter((s) => s.effort === "default").length} / high{" "}
+          {OCT_2026_BATCH.filter((s) => s.effort === "high").length} · includes the 5-part &quot;How to Enter an
+          Industry&quot; series · scheduled weekly starting {BASE_DATE}.
+        </p>
+        {octBatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedOctoberBatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import Oct 2026 batch ({OCT_2026_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
 
       <Card className="mb-8">
         <h3 className="font-heading text-xl mb-4">Add to calendar</h3>

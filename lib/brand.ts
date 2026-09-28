@@ -99,11 +99,14 @@ declare global {
 
 async function loadBrand(): Promise<BrandConfig> {
   await ensureSchema();
+  // ON CONFLICT DO NOTHING -- concurrent cold-start requests can race this
+  // insert (each sees zero rows before any of them commit), so it must be
+  // safe to run more than once.
+  await sql`
+    INSERT INTO brand_config (key, value) VALUES ('brand', ${JSON.stringify(DEFAULT_BRAND)})
+    ON CONFLICT (key) DO NOTHING
+  `;
   const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = 'brand'`;
-  if (rows.length === 0) {
-    await sql`INSERT INTO brand_config (key, value) VALUES ('brand', ${JSON.stringify(DEFAULT_BRAND)})`;
-    return DEFAULT_BRAND;
-  }
   return { ...DEFAULT_BRAND, ...JSON.parse(rows[0].value) };
 }
 

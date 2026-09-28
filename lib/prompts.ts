@@ -6,7 +6,16 @@ import {
   REACH_VS_CONVERSION_EXAMPLE,
   HOOK_STACK_EXAMPLES,
   HISTORICAL_MEDIA_TIP,
+  SCRIPT_CRAFT_RULES,
 } from "./reference";
+
+function craftRulesBlock() {
+  return `CRISP-SCRIPT RULES (no fluff -- violating these is a rewrite, not a nitpick):
+Hook: ${SCRIPT_CRAFT_RULES.hook.join(" ")}
+Body/pacing: ${SCRIPT_CRAFT_RULES.body.join(" ")}
+CTA: ${SCRIPT_CRAFT_RULES.cta.join(" ")}
+Length: ${SCRIPT_CRAFT_RULES.length.join(" ")}`;
+}
 
 function brandContext(brand: BrandConfig) {
   return `You are helping ${brand.nameField}, ${brand.occupation}.
@@ -93,6 +102,8 @@ ${depthInstruction}
 ${funnelInstruction}
 ${ctaInstruction}
 ${historicalMediaNote}
+
+${craftRulesBlock()}
 
 Format the output in 3 color-coded bullet groups exactly like this:
 BLACK (spoken dialogue, line by line):
@@ -216,6 +227,8 @@ TASK: Design a ${opts.episodes}-episode short-form series called "How to Enter t
 
 For each episode give: Episode title | Hook (written + verbal) | Core value point (hyper-specific, not generic) | Script angle to use | Suggested filming format.
 Return as a numbered list, one episode per number. Keep total series watchable as a binge -- each episode must stand alone but reward watching the series in order.
+
+${craftRulesBlock()}
 
 GOOD episode value point: "In [industry], the #1 killer isn't competition -- it's a 6-9 month regulatory approval window most founders don't budget for."
 BAD episode value point (avoid): "This industry has a lot of opportunity but also some challenges to consider."`;

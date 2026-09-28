@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { sql, ensureSchema } from "./db";
 import { updateBrand, BrandConfig } from "./brand";
+import { BASE_DATE, BATCH_TAG, OCT_2026_BATCH } from "./seed-data/octBatch";
 
 function val(fd: FormData, key: string, fallback = "") {
   const v = fd.get(key);
@@ -175,4 +176,107 @@ export async function deleteOwnPost(fd: FormData) {
   await sql`DELETE FROM own_posts WHERE id = ${id(fd)}`;
   revalidatePath("/analytics");
   revalidatePath("/");
+}
+
+// ---------- Oct 2026 content batch (30 scripts, weekly, from BASE_DATE) ----------
+function addDays(dateStr: string, days: number) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+export async function isOctoberBatchSeeded(): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BATCH_TAG}`;
+  return rows.length > 0;
+}
+
+export async function seedOctoberBatch() {
+  await ensureSchema();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BATCH_TAG}`;
+  if (already.length > 0) {
+    revalidatePath("/calendar");
+    return { alreadySeeded: true as const, count: 0 };
+  }
+
+  const calendarRows = OCT_2026_BATCH.map((s) => ({
+    date: addDays(BASE_DATE, s.weekOffset * 7),
+    pillar: s.pillar,
+    concept_bucket: s.conceptBucket,
+    content_type: s.contentType,
+    topic: s.title,
+    angle: s.angle,
+    format: s.format,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "scripted",
+    notes: `Oct 2026 batch -- effort: ${s.effort}${s.seriesName ? ` -- series: ${s.seriesName}` : ""}. Full script in Script Studio.`,
+  }));
+
+  const scriptRows = OCT_2026_BATCH.map((s) => ({
+    title: s.title,
+    pillar: s.pillar,
+    content_type: s.contentType,
+    angle_or_story_type: s.angle,
+    format: s.format,
+    body_black: s.bodyBlack,
+    body_red: s.bodyRed,
+    body_green: s.bodyGreen,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "draft",
+    series_name: s.seriesName ?? "",
+  }));
+
+  await sql`
+    INSERT INTO calendar_items ${sql(
+      calendarRows,
+      "date",
+      "pillar",
+      "concept_bucket",
+      "content_type",
+      "topic",
+      "angle",
+      "format",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "notes"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO scripts ${sql(
+      scriptRows,
+      "title",
+      "pillar",
+      "content_type",
+      "angle_or_story_type",
+      "format",
+      "body_black",
+      "body_red",
+      "body_green",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "series_name"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO brand_config (key, value) VALUES (${BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: OCT_2026_BATCH.length })})
+    ON CONFLICT (key) DO NOTHING
+  `;
+
+  revalidatePath("/calendar");
+  revalidatePath("/scripts");
+  revalidatePath("/production");
+  revalidatePath("/funnel");
+  revalidatePath("/");
+
+  return { alreadySeeded: false as const, count: OCT_2026_BATCH.length };
+}
+
+export async function seedOctoberBatchAction() {
+  await seedOctoberBatch();
 }
