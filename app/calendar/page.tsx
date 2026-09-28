@@ -177,7 +177,15 @@ export default function CalendarPage() {
       </Card>
 
       <Card>
-        <h3 className="font-heading text-xl mb-4">Batch ({items.length})</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-heading text-xl">Batch ({items.length})</h3>
+          <a
+            href="/api/export/calendar"
+            className="text-xs rounded-full border border-border/20 px-3 py-1.5 hover:bg-foreground/5"
+          >
+            Export to Word
+          </a>
+        </div>
         {items.length === 0 ? (
           <p className="text-sm text-muted">Nothing planned yet — add your first item above.</p>
         ) : (

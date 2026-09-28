@@ -34,8 +34,16 @@ export function buildScriptPrompt(
     topic: string;
     hookStack?: { written?: string; verbal?: string; visual?: string };
     format?: string;
+    depth?: "easy" | "complex";
   }
 ) {
+  const depthInstruction =
+    opts.depth === "easy"
+      ? "Depth: EASY / LOW-EFFORT. Use an obvious, simple repeating pattern (a rating, a ranked list, a \"if you do X, Y happens\" structure). Optimize for broad reach and fast comprehension over depth."
+      : opts.depth === "complex"
+        ? "Depth: COMPLEX / HIGH-EFFORT. Use raw storytelling or a hyper-educational breakdown that's harder to recognize as a template (a side-by-side scenario comparison, a \"is it possible to...\" deep dive). Optimize for conversion into followers/leads, not just views."
+        : "";
+
   return `${brandContext(brand)}
 
 TASK: Write a full short-form video script (45-75 seconds spoken) for:
@@ -45,6 +53,7 @@ Angle / story type: ${opts.angleOrStoryType}
 Topic: ${opts.topic}
 ${opts.hookStack ? `Use this hook stack -- Written: "${opts.hookStack.written}" | Verbal: "${opts.hookStack.verbal}" | Visual: "${opts.hookStack.visual}"` : "Open with a strong written + verbal hook."}
 ${opts.format ? `Filming format: ${opts.format}` : ""}
+${depthInstruction}
 
 Format the output in 3 color-coded bullet groups exactly like this:
 BLACK (spoken dialogue, line by line):
@@ -145,4 +154,73 @@ export function buildProblemResearchPrompt(brand: BrandConfig, opts: { subniche:
   return `${brandContext(brand)}
 
 TASK: List 10 specific, painful problems that ${brand.occupation}'s ideal audience faces in "${opts.subniche}". For each problem: name it in one line, explain why it's painful/costly, and suggest which script angle (framework, myth bust, comparison, transformation, etc.) would best address it as a short-form video.`;
+}
+
+export function buildRawIdeaDeveloperPrompt(brand: BrandConfig, opts: { rawIdea: string }) {
+  return `${brandContext(brand)}
+
+RAW IDEA (unfiltered, possibly messy): "${opts.rawIdea}"
+
+TASK: Turn this raw idea into a complete video brief covering all 7 factors of a short:
+1. Topic -- the sharpened, specific version of this idea.
+2. Hooks -- a full hook stack (written, verbal, visual), hyper-specific.
+3. Value -- the actual "meat": what specific, measurable knowledge/story does this deliver (not fluffy/vague)?
+4. Script angle -- which of the 7 angles fits best (framework, comparison, myth bust, do/don't, tip/hack, transformation, challenge) and why.
+5. CTA -- follow, engagement, ManyChat, or none, matched to a funnel stage (TOFU/MOFU/BOFU).
+6. Video format -- which of the 11 filming formats suits this idea, prioritizing my preferred formats: ${brand.formatPrefs.join(", ")}.
+7. Editing notes -- 2-3 concrete on-screen text/graphic ideas using my visual assets: ${brand.assetTypes.join(", ")}.
+
+If the raw idea is too vague to act on, say exactly what additional detail you need instead of guessing.`;
+}
+
+export function buildBioPrompt(brand: BrandConfig) {
+  return `${brandContext(brand)}
+
+TASK: Write my Instagram profile using the 4-line bio framework (so a viewer understands who I am and what I offer within 5 seconds):
+Line 1: Who I am / role (hook-y, not just a title)
+Line 2: Who I help + how (specific outcome, not vague)
+Line 3: Proof/credibility (a specific number from my track record: ${brand.proprietaryValue})
+Line 4: A single clear next step pointing to my one bio link (${brand.bioLink})
+
+Also give me:
+- 3 options for the searchable name field, in the format "[Name] | [Keyword/Niche/Occupation]" using my niche (${brand.niche}) and sub-niches (${brand.subniches.join(", ")}).
+- A one-line check on my current handle/name field choice: "${brand.nameField}" -- does it read as spammy, confusing, or unclear? If so, fix it.
+
+Keep every line specific and outcome-focused, no generic "helping people achieve their goals" language.`;
+}
+
+export function buildManyChatMessagePrompt(
+  brand: BrandConfig,
+  opts: { triggerWord: string; offer: string }
+) {
+  return `${brandContext(brand)}
+
+TASK: Write the ManyChat automated DM sequence for this comment-trigger automation:
+Trigger word (what viewers comment): "${opts.triggerWord}"
+Offer being delivered: "${opts.offer}"
+
+Give me:
+1. The public comment-reply ManyChat sends before DMing (short, confirms it's coming).
+2. The DM opening message (warm, on-brand, references the video they commented on).
+3. The DM's actual delivery message with a single clear link to ${brand.bioLink}.
+4. One optional follow-up message to send 24 hours later if they haven't clicked the link.
+
+Keep it conversational, first-person, zero corporate tone -- this is a DM from ${brand.nameField.split("|")[0].trim()}, not a bot.`;
+}
+
+export function buildOutlierDeconstructionPrompt(
+  opts: { transcriptOrDescription: string }
+) {
+  return `This is the transcript or description of a viral outlier short-form video (a small-to-midsize creator's video that got 5x+ more views than their follower count):
+
+"${opts.transcriptOrDescription}"
+
+TASK: Deconstruct exactly why this video worked. Break it down into:
+1. Hook type used (written/verbal/visual) and the specific hook text -- why does it stop the scroll?
+2. Script angle (framework, comparison, myth bust, do/don't, tip/hack, transformation, or challenge).
+3. Value type -- personal experience/knowledge, or a credible external source?
+4. Structure -- map the video beat-by-beat (opening, build, payoff, CTA).
+5. What's replicable vs. what's specific to that creator/niche (so I know what to actually copy vs. leave behind).
+
+Be blunt about what's actually doing the work vs. what's incidental.`;
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/lib/auth-actions";
 
 const SECTIONS = [
   { href: "/", label: "Dashboard", num: "00" },
@@ -18,6 +19,8 @@ const SECTIONS = [
 
 export default function Nav() {
   const pathname = usePathname();
+
+  if (pathname === "/login") return null;
 
   return (
     <nav className="w-64 shrink-0 border-r border-border/20 bg-card/40 px-5 py-8 hidden md:flex md:flex-col gap-1 sticky top-0 h-screen overflow-y-auto">
@@ -42,6 +45,9 @@ export default function Nav() {
           </Link>
         );
       })}
+      <form action={logoutAction} className="mt-auto pt-4">
+        <button className="text-xs text-muted hover:text-foreground px-3">Log out</button>
+      </form>
     </nav>
   );
 }

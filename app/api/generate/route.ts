@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const unauthorized = requireAuth(req);
+  if (unauthorized) return unauthorized;
+
   const { prompt } = (await req.json()) as { prompt?: string };
 
   if (!prompt || !prompt.trim()) {

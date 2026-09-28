@@ -77,6 +77,7 @@ function AuthorityTab({ brand }: { brand: BrandConfig }) {
   const [format, setFormat] = useState("");
   const [funnel, setFunnel] = useState("tofu");
   const [cta, setCta] = useState("follow");
+  const [depth, setDepth] = useState<"easy" | "complex" | "">("");
 
   const prompt = buildScriptPrompt(brand, {
     pillar: "authority",
@@ -84,6 +85,7 @@ function AuthorityTab({ brand }: { brand: BrandConfig }) {
     angleOrStoryType: angle,
     topic: topic || "(enter a topic below)",
     format,
+    depth: depth || undefined,
   });
 
   async function handleSave(text: string) {
@@ -112,11 +114,20 @@ function AuthorityTab({ brand }: { brand: BrandConfig }) {
           <div>
             <label className="text-xs text-muted block mb-1">Angle</label>
             <select value={angle} onChange={(e) => setAngle(e.target.value)} className={inputClass}>
-              {SCRIPT_ANGLES.map((a) => (
-                <option key={a.id} value={a.name}>
-                  {a.name}
-                </option>
-              ))}
+              <optgroup label="7 script angles">
+                {SCRIPT_ANGLES.map((a) => (
+                  <option key={a.id} value={a.name}>
+                    {a.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="9 authority content formats">
+                {AUTHORITY_CONTENT_FORMATS.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
           <div>
@@ -147,6 +158,14 @@ function AuthorityTab({ brand }: { brand: BrandConfig }) {
               <option value="none">None</option>
             </select>
           </div>
+          <div className="md:col-span-2">
+            <label className="text-xs text-muted block mb-1">Depth (reach vs. conversion)</label>
+            <select value={depth} onChange={(e) => setDepth(e.target.value as "easy" | "complex" | "")} className={inputClass}>
+              <option value="">Default</option>
+              <option value="easy">Easy / low-effort -- optimize for reach</option>
+              <option value="complex">Complex / high-effort -- optimize for conversion</option>
+            </select>
+          </div>
         </div>
         <PromptRunner prompt={prompt} label="Generate script" onSave={handleSave} />
       </Card>
@@ -157,6 +176,11 @@ function AuthorityTab({ brand }: { brand: BrandConfig }) {
             <li key={f}>• {f}</li>
           ))}
         </ul>
+        <h3 className="font-heading text-lg mt-5 mb-2">Reach vs. conversion</h3>
+        <p className="text-xs text-muted">
+          Easy/low-effort structures (ratings, simple lists) win reach. Complex/high-effort structures
+          (storytelling, hyper-educational breakdowns) win followers and leads. Pick depth deliberately.
+        </p>
       </Card>
     </div>
   );
@@ -200,11 +224,20 @@ function StorytellingTab({ brand }: { brand: BrandConfig }) {
           <div>
             <label className="text-xs text-muted block mb-1">Story type</label>
             <select value={storyType} onChange={(e) => setStoryType(e.target.value)} className={inputClass}>
-              {STORY_TYPES.map((s) => (
-                <option key={s.id} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
+              <optgroup label="7 story types">
+                {STORY_TYPES.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Journey series formats">
+                {JOURNEY_SERIES_FORMATS.map((f) => (
+                  <option key={f.id} value={f.name}>
+                    {f.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
           <div>
@@ -343,7 +376,14 @@ function BankTab({ scripts, templates }: { scripts: ScriptRow[]; templates: Temp
       </Card>
 
       <Card>
-        <h3 className="font-heading text-xl mb-4">Scripts ({scripts.length})</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-heading text-xl">Scripts ({scripts.length})</h3>
+          {scripts.length > 0 && (
+            <a href="/api/export/scripts" className="text-xs rounded-full border border-border/20 px-3 py-1.5 hover:bg-foreground/5">
+              Export all to Word
+            </a>
+          )}
+        </div>
         {scripts.length === 0 ? (
           <p className="text-sm text-muted">No scripts saved yet.</p>
         ) : (
@@ -362,7 +402,10 @@ function BankTab({ scripts, templates }: { scripts: ScriptRow[]; templates: Temp
                   {s.body_red && <p><span className="text-red-400 font-medium">Red:</span> <span className="text-muted whitespace-pre-wrap">{s.body_red}</span></p>}
                   {s.body_green && <p><span className="text-green-400 font-medium">Green:</span> <span className="text-muted whitespace-pre-wrap">{s.body_green}</span></p>}
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 flex items-center gap-3">
+                  <a href={`/api/export/script/${s.id}`} className="text-xs text-accent hover:underline">
+                    Export to Word
+                  </a>
                   <DeleteForm action={deleteScript} id={s.id} />
                 </div>
               </details>
