@@ -8,14 +8,6 @@ if (!connectionString) {
   );
 }
 
-// TEMPORARY diagnostic -- password redacted, safe to leave in logs.
-console.log(
-  "[db debug] source=",
-  process.env.DATABASE_URL ? "DATABASE_URL" : "POSTGRES_URL",
-  "masked=",
-  connectionString.replace(/:([^:@/]+)@/, ":***@")
-);
-
 const isLocal = /localhost|127\.0\.0\.1/.test(connectionString);
 
 declare global {

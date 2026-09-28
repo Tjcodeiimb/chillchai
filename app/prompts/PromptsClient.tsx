@@ -26,6 +26,10 @@ import {
   PROFILE_RIGHT_WRONG,
   FIVE_X_OUTLIER_RULE,
   TRANSCRIPT_TEMPLATIZE_PROMPT,
+  TOOLS,
+  HOOK_STACK_EXAMPLES,
+  REACH_VS_CONVERSION_EXAMPLE,
+  HISTORICAL_MEDIA_TIP,
 } from "@/lib/reference";
 import { Card, Badge, SubTabs } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
@@ -295,8 +299,66 @@ function ReferenceTab() {
   return (
     <div className="space-y-6">
       <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-heading text-xl">Tools & integrations</h3>
+        </div>
+        <p className="text-xs text-muted mb-4">
+          Every tool the playbook names, and whether it&apos;s wired into this app, needs to be used manually
+          alongside it, or is a possible future build.
+        </p>
+        <div className="space-y-3">
+          {TOOLS.map((t) => (
+            <div key={t.name} className="border-b border-border/10 pb-3 last:border-0">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-sm font-medium">{t.name}</span>
+                <Badge tone={t.status === "connected" ? "accent" : t.status === "planned" ? "warn" : "default"}>
+                  {t.status === "connected" ? "connected in-app" : t.status === "planned" ? "future / planned" : "manual (external)"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted">{t.purpose}</p>
+              <p className="text-xs text-muted mt-1">{t.note}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
         <h3 className="font-heading text-xl mb-3">The 5x outlier rule</h3>
         <p className="text-sm text-muted">{FIVE_X_OUTLIER_RULE}</p>
+      </Card>
+
+      <Card>
+        <h3 className="font-heading text-xl mb-3">Reach vs. conversion -- the real numbers</h3>
+        <div className="grid md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <div className="font-medium mb-1">{REACH_VS_CONVERSION_EXAMPLE.easy.label}</div>
+            <div className="text-muted">{REACH_VS_CONVERSION_EXAMPLE.easy.views} → {REACH_VS_CONVERSION_EXAMPLE.easy.result}</div>
+            <div className="text-xs text-muted mt-1">{REACH_VS_CONVERSION_EXAMPLE.easy.verdict}</div>
+          </div>
+          <div>
+            <div className="font-medium mb-1">{REACH_VS_CONVERSION_EXAMPLE.complex.label}</div>
+            <div className="text-muted">{REACH_VS_CONVERSION_EXAMPLE.complex.views} → {REACH_VS_CONVERSION_EXAMPLE.complex.result}</div>
+            <div className="text-xs text-muted mt-1">{REACH_VS_CONVERSION_EXAMPLE.complex.verdict}</div>
+          </div>
+        </div>
+        <p className="text-xs text-muted mt-3">This is why the Script Studio depth control exists -- pick deliberately, not by accident.</p>
+      </Card>
+
+      <Card>
+        <h3 className="font-heading text-xl mb-3">Real hook stack examples (good bar to hit)</h3>
+        <div className="space-y-2">
+          {HOOK_STACK_EXAMPLES.map((e, i) => (
+            <div key={i} className="text-xs bg-background/40 border border-border/10 rounded-md px-3 py-2">
+              <span className="text-muted">Written:</span> &quot;{e.written}&quot; · <span className="text-muted">Verbal:</span> &quot;{e.verbal}&quot; ·{" "}
+              <span className="text-muted">Visual:</span> {e.visual}
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <h3 className="font-heading text-xl mb-3">Historical media tip (storytelling)</h3>
+        <p className="text-sm text-muted">{HISTORICAL_MEDIA_TIP}</p>
       </Card>
 
       <Card>
@@ -363,7 +425,7 @@ function ReferenceTab() {
       </Card>
 
       <Card>
-        <h3 className="font-heading text-xl mb-3">11 filming formats</h3>
+        <h3 className="font-heading text-xl mb-3">12 filming formats</h3>
         <ul className="text-sm space-y-2">
           {FILMING_FORMATS.map((f) => (
             <li key={f.id}>

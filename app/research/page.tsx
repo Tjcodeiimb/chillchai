@@ -5,6 +5,7 @@ import { FIVE_X_OUTLIER_RULE, SCRIPT_ANGLES } from "@/lib/reference";
 import { createOutlier, toggleOutlierUsed, deleteOutlier } from "@/lib/actions";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
+import CsvImportClient from "./CsvImportClient";
 
 type Outlier = {
   id: number;
@@ -58,8 +59,10 @@ export default async function ResearchPage() {
         </Card>
       </div>
 
+      <CsvImportClient />
+
       <Card className="mb-8">
-        <h3 className="font-heading text-xl mb-4">Log an outlier</h3>
+        <h3 className="font-heading text-xl mb-4">Log a single outlier manually</h3>
         <form action={createOutlier} className="grid md:grid-cols-3 gap-3">
           <div>
             <label className="text-xs text-muted block mb-1">Source</label>

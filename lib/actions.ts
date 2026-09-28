@@ -74,6 +74,42 @@ export async function deleteOutlier(fd: FormData) {
   revalidatePath("/research");
 }
 
+export type BulkOutlierRow = {
+  source_type: string;
+  creator_handle: string;
+  link: string;
+  niche_keyword: string;
+  follower_count: number;
+  views: number;
+  hook_written: string;
+  hook_verbal: string;
+  hook_visual: string;
+  angle: string;
+  notes: string;
+};
+
+export async function createOutliersBulk(rows: BulkOutlierRow[]) {
+  if (rows.length === 0) return;
+  await ensureSchema();
+  await sql`
+    INSERT INTO outlier_research ${sql(
+      rows,
+      "source_type",
+      "creator_handle",
+      "link",
+      "niche_keyword",
+      "follower_count",
+      "views",
+      "hook_written",
+      "hook_verbal",
+      "hook_visual",
+      "angle",
+      "notes"
+    )}
+  `;
+  revalidatePath("/research");
+}
+
 // ---------- Hook stacks ----------
 export async function createHookStack(fd: FormData) {
   await ensureSchema();

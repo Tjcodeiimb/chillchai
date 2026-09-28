@@ -7,7 +7,15 @@ import {
   buildTranscriptTemplatizePrompt,
   buildIndustryEntrySeriesPrompt,
 } from "@/lib/prompts";
-import { SCRIPT_ANGLES, STORY_TYPES, FILMING_FORMATS, JOURNEY_SERIES_FORMATS, AUTHORITY_CONTENT_FORMATS } from "@/lib/reference";
+import {
+  SCRIPT_ANGLES,
+  STORY_TYPES,
+  FILMING_FORMATS,
+  JOURNEY_SERIES_FORMATS,
+  AUTHORITY_CONTENT_FORMATS,
+  STORYTELLING_RECOMMENDED_FORMAT_IDS,
+  HISTORICAL_MEDIA_TIP,
+} from "@/lib/reference";
 import { createScript, createScriptTemplate, deleteScript, deleteScriptTemplate } from "@/lib/actions";
 import { Card, Badge, SubTabs, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
@@ -86,6 +94,8 @@ function AuthorityTab({ brand }: { brand: BrandConfig }) {
     topic: topic || "(enter a topic below)",
     format,
     depth: depth || undefined,
+    funnelStage: funnel as "tofu" | "mofu" | "bofu",
+    ctaType: cta as "follow" | "engagement" | "manychat" | "none",
   });
 
   async function handleSave(text: string) {
@@ -190,6 +200,8 @@ function StorytellingTab({ brand }: { brand: BrandConfig }) {
   const [topic, setTopic] = useState("");
   const [storyType, setStoryType] = useState(STORY_TYPES[0].name);
   const [format, setFormat] = useState("");
+  const [funnel, setFunnel] = useState("tofu");
+  const [cta, setCta] = useState("follow");
 
   const prompt = buildScriptPrompt(brand, {
     pillar: "journey",
@@ -197,6 +209,8 @@ function StorytellingTab({ brand }: { brand: BrandConfig }) {
     angleOrStoryType: storyType,
     topic: topic || `(use: ${brand.journeyAssets})`,
     format,
+    funnelStage: funnel as "tofu" | "mofu" | "bofu",
+    ctaType: cta as "follow" | "engagement" | "manychat" | "none",
   });
 
   async function handleSave(text: string) {
@@ -207,6 +221,8 @@ function StorytellingTab({ brand }: { brand: BrandConfig }) {
     fd.set("angle_or_story_type", storyType);
     fd.set("format", format);
     fd.set("body_black", text);
+    fd.set("cta_type", cta);
+    fd.set("funnel_stage", funnel);
     fd.set("status", "draft");
     await createScript(fd);
   }
@@ -244,17 +260,52 @@ function StorytellingTab({ brand }: { brand: BrandConfig }) {
             <label className="text-xs text-muted block mb-1">Format</label>
             <select value={format} onChange={(e) => setFormat(e.target.value)} className={inputClass}>
               <option value="">—</option>
-              {FILMING_FORMATS.map((f) => (
-                <option key={f.id} value={f.name}>
-                  {f.name}
-                </option>
-              ))}
+              <optgroup label="Recommended for storytelling">
+                {FILMING_FORMATS.filter((f) => STORYTELLING_RECOMMENDED_FORMAT_IDS.includes(f.id)).map((f) => (
+                  <option key={f.id} value={f.name}>
+                    {f.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Other formats">
+                {FILMING_FORMATS.filter((f) => !STORYTELLING_RECOMMENDED_FORMAT_IDS.includes(f.id)).map((f) => (
+                  <option key={f.id} value={f.name}>
+                    {f.name}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted block mb-1">Funnel stage</label>
+            <select value={funnel} onChange={(e) => setFunnel(e.target.value)} className={inputClass}>
+              <option value="tofu">TOFU</option>
+              <option value="mofu">MOFU</option>
+              <option value="bofu">BOFU</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted block mb-1">CTA</label>
+            <select value={cta} onChange={(e) => setCta(e.target.value)} className={inputClass}>
+              <option value="follow">Follow</option>
+              <option value="engagement">Engagement</option>
+              <option value="manychat">ManyChat</option>
+              <option value="none">None</option>
             </select>
           </div>
         </div>
+        <p className="text-xs text-muted mb-3">{HISTORICAL_MEDIA_TIP}</p>
         <PromptRunner prompt={prompt} label="Generate script" onSave={handleSave} />
       </Card>
       <Card>
+        <h3 className="font-heading text-lg mb-3">Best formats for storytelling</h3>
+        <ul className="text-xs text-muted space-y-2 mb-5">
+          {FILMING_FORMATS.filter((f) => STORYTELLING_RECOMMENDED_FORMAT_IDS.includes(f.id)).map((f) => (
+            <li key={f.id}>
+              <span className="text-foreground">{f.name}:</span> {f.description}
+            </li>
+          ))}
+        </ul>
         <h3 className="font-heading text-lg mb-3">Journey series formats</h3>
         <ul className="text-xs text-muted space-y-2">
           {JOURNEY_SERIES_FORMATS.map((f) => (

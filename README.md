@@ -106,7 +106,7 @@ Exports are generated server-side with the `docx` package — no third-party ser
 | 03 | Outlier Research | 5x-outlier log with auto multiple calc, keyword bank generator |
 | 04 | Hook Lab | Hook stack generator/library, 7 hook angles, universal cross-niche templates |
 | 05 | Script Studio | Authority/educational + storytelling generators (with a reach-vs-conversion depth control), transcript→template tool, signature "How to Enter an Industry" series builder, script bank, export to Word |
-| 06 | Production Planner | 11 filming formats, equipment checklist, shot list pulled from a saved script, batch folder namer |
+| 06 | Production Planner | 12 filming formats, equipment checklist, shot list pulled from a saved script, batch folder namer |
 | 07 | CTA & Funnel Mapper | TOFU/MOFU/BOFU distribution, CTA decision guide, ManyChat setup checklist, caption generator |
 | 08 | Master Prompt Library | Every generator runnable inline (bio, keyword bank, topic/problem research, raw-idea developer, outlier deconstruction, hooks, captions, ManyChat DM writer, calendar ideation, double-down) plus the full static reference library — export the whole thing to Word |
 | 09 | Analytics & Levels | Log posted videos, top/bottom 5, double-down variant generator |

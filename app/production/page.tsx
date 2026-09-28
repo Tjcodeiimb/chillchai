@@ -19,7 +19,7 @@ export default async function ProductionPage() {
 
       <div className="grid md:grid-cols-2 gap-4 mb-8">
         <Card>
-          <h3 className="font-heading text-xl mb-3">11 filming formats</h3>
+          <h3 className="font-heading text-xl mb-3">12 filming formats</h3>
           <ul className="space-y-2 text-sm">
             {FILMING_FORMATS.map((f) => (
               <li key={f.id} className="flex items-start gap-2">

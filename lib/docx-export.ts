@@ -20,6 +20,10 @@ import {
   PROFILE_RIGHT_WRONG,
   FIVE_X_OUTLIER_RULE,
   TRANSCRIPT_TEMPLATIZE_PROMPT,
+  TOOLS,
+  HOOK_STACK_EXAMPLES,
+  REACH_VS_CONVERSION_EXAMPLE,
+  HISTORICAL_MEDIA_TIP,
 } from "./reference";
 import {
   buildHookStackPrompt,
@@ -284,7 +288,7 @@ export function buildPromptLibraryDoc(brand: BrandConfig) {
 
   // 5. Production
   children.push(h1("5. Production"));
-  children.push(h2("11 filming formats"));
+  children.push(h2("12 filming formats"));
   FILMING_FORMATS.forEach((f) => children.push(label(f.name, f.description)));
   children.push(h2("Equipment on hand"));
   brand.equipment.forEach((e) => children.push(bullet(e)));
@@ -309,6 +313,27 @@ export function buildPromptLibraryDoc(brand: BrandConfig) {
   children.push(h1("8. Analytics"));
   children.push(h2("Double-down variant generator"));
   children.push(promptBlock(buildDoubleDownPrompt(brand, { topic: exampleTopic })));
+
+  // 9. Tools & Integrations
+  children.push(h1("9. Tools & Integrations"));
+  children.push(p("Every tool the playbook names, and its status in this app."));
+  TOOLS.forEach((t) => {
+    children.push(h3(`${t.name} — ${t.status === "connected" ? "connected in-app" : t.status === "planned" ? "future / planned" : "manual (external)"}`));
+    children.push(label("Purpose", t.purpose));
+    children.push(p(t.note));
+  });
+
+  // 10. Extra calibration reference
+  children.push(h1("10. Calibration Reference"));
+  children.push(h2("Reach vs. conversion — the real numbers"));
+  children.push(label(REACH_VS_CONVERSION_EXAMPLE.easy.label, `${REACH_VS_CONVERSION_EXAMPLE.easy.views} → ${REACH_VS_CONVERSION_EXAMPLE.easy.result} — ${REACH_VS_CONVERSION_EXAMPLE.easy.verdict}`));
+  children.push(label(REACH_VS_CONVERSION_EXAMPLE.complex.label, `${REACH_VS_CONVERSION_EXAMPLE.complex.views} → ${REACH_VS_CONVERSION_EXAMPLE.complex.result} — ${REACH_VS_CONVERSION_EXAMPLE.complex.verdict}`));
+  children.push(h2("Real hook stack examples"));
+  HOOK_STACK_EXAMPLES.forEach((e) => {
+    children.push(bullet(`Written: "${e.written}" | Verbal: "${e.verbal}" | Visual: ${e.visual}`));
+  });
+  children.push(h2("Historical media tip (storytelling)"));
+  children.push(p(HISTORICAL_MEDIA_TIP));
 
   return new Document({ sections: [{ children, properties: { titlePage: false } }] });
 }

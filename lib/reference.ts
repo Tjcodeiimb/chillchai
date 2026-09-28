@@ -156,7 +156,15 @@ export const FILMING_FORMATS = [
   { id: "qa", name: "Q&A Format", description: "Off-camera interviewer asking questions." },
   { id: "green_screen", name: "Green Screen Format", description: "Speaking with relevant background media." },
   { id: "reaction", name: "Reaction Format", description: "Reacting to niche viral clips with expert commentary." },
+  { id: "audio_broll_text", name: "Audio B-Roll + Text", description: "Line-by-line images/videos changing every 1-3 seconds, paired with on-screen text and emotional background music -- no voiceover." },
 ];
+
+// The playbook calls out these 3 (of the 12 above) as the ones that perform
+// exceptionally well specifically for storytelling/journey content.
+export const STORYTELLING_RECOMMENDED_FORMAT_IDS = ["voiceover_broll", "shot_angle_changes", "audio_broll_text"];
+
+export const HISTORICAL_MEDIA_TIP =
+  "Whenever it exists, use the actual photo or video from the time period you're talking about -- not a generic stand-in. Real historical media is what makes a storytelling video feel authentic instead of staged.";
 
 export const UNIVERSAL_HOOK_TEMPLATES = [
   "Is it possible to [outcome]...",
@@ -175,11 +183,169 @@ export const PROFILE_RIGHT_WRONG = [
   { field: "Bio structure", wrong: "Messy, unstructured, ambiguous text", right: "4-line structured framework -- clear in 5 seconds" },
 ];
 
+// Real numbers from the playbook, used to calibrate the easy/reach vs
+// complex/conversion choice with something concrete instead of abstract advice.
+export const REACH_VS_CONVERSION_EXAMPLE = {
+  easy: {
+    label: "Easy / low-effort (e.g. a rating reel)",
+    views: "1,000,000 views",
+    result: "~200 new followers",
+    verdict: "High reach, close to zero conversion.",
+  },
+  complex: {
+    label: "Complex / high-effort (raw storytelling / hyper-educational breakdown)",
+    views: "1,000,000+ views",
+    result: "30,000+ new followers",
+    verdict: "Same reach ballpark, 150x the conversion.",
+  },
+};
+
+export type HookStackExample = { written: string; verbal: string; visual: string; niche: string };
+
+// Real hook stack examples from the playbook (styling niche) -- used as concrete
+// few-shot calibration so "hyper-specific" has a real bar to hit, not just a rule.
+export const HOOK_STACK_EXAMPLES: HookStackExample[] = [
+  {
+    niche: "styling / fashion",
+    written: "Hairstyle neckline guide",
+    verbal: "This is the best hairstyle for different tops",
+    visual: "Clone visual effect (multiple versions of yourself side by side)",
+  },
+  {
+    niche: "styling / fashion",
+    written: "How to dress for your proportions",
+    verbal: "How to dress for your body type",
+    visual: "Drawn-on visuals and body-type labels over the frame",
+  },
+  {
+    niche: "styling / fashion",
+    written: "Jeans for different body types",
+    verbal: "Try on jeans based on your body shape",
+    visual: "Three clones on screen, each in a different jean cut, labeled",
+  },
+];
+
+export type ToolEntry = {
+  name: string;
+  purpose: string;
+  status: "connected" | "manual" | "planned";
+  note: string;
+};
+
+export const TOOLS: ToolEntry[] = [
+  {
+    name: "gettranscribe.ai",
+    purpose: "Transcribe a viral reel's audio to text",
+    status: "manual",
+    note: "Paste the reel link there, copy the transcript, paste it into Script Studio's Transcript → Template tool.",
+  },
+  {
+    name: "Sort Feed (Chrome extension)",
+    purpose: "Sort a specific creator's Reels by view count and export as CSV",
+    status: "connected",
+    note: "Export the CSV from the extension, then paste it into the Outlier Research Hub's CSV import -- it auto-computes the 5x multiple for every row and bulk-saves the outliers.",
+  },
+  {
+    name: "Instagram Explore / Reels tab",
+    purpose: "Keyword search and reels-recommendation-feed research methods",
+    status: "manual",
+    note: "Native Instagram -- no export tool exists for these two methods, so log finds one at a time in the Research page.",
+  },
+  {
+    name: "Dummy account + algorithm reset",
+    purpose: "Reset a research account's suggested content before a research session",
+    status: "manual",
+    note: "Profile → Menu → Content Preferences → Reset Suggested Content → Reset. Checklist is on the Research page.",
+  },
+  {
+    name: "Instagram's Edits app",
+    purpose: "Deeper analytics tracking once you're past 1,000 followers (Level 2 audit)",
+    status: "manual",
+    note: "External app -- log the numbers you find into Analytics & Levels manually; no public API exists to pull them automatically.",
+  },
+  {
+    name: "ManyChat",
+    purpose: "Comment-trigger automation → automated DM with your bio link",
+    status: "manual",
+    note: "Set up the automation in ManyChat directly (checklist on the CTA & Funnel Mapper page); this app writes the DM message copy for you.",
+  },
+  {
+    name: "CapCut",
+    purpose: "Editing your filmed footage",
+    status: "manual",
+    note: "External editor. Shot lists from Production Planner are built to hand straight to an editor if you're not cutting it yourself.",
+  },
+  {
+    name: "PFPMaker",
+    purpose: "Generate a profile picture with a background matched to your brand colors",
+    status: "manual",
+    note: "External tool -- feed it your brand colors from the Brand Foundation page.",
+  },
+  {
+    name: "Basic tripod + microphone",
+    purpose: "Filming setup",
+    status: "connected",
+    note: "Tracked as your equipment checklist on the Production Planner page.",
+  },
+  {
+    name: "Gemini API",
+    purpose: "Live AI generation for every prompt in this app",
+    status: "connected",
+    note: "Add GEMINI_API_KEY in your environment to enable \"Generate\" buttons everywhere.",
+  },
+  {
+    name: "Claude / ChatGPT (or any LLM)",
+    purpose: "Manual fallback for every generator",
+    status: "connected",
+    note: "Every prompt has a \"Copy prompt\" option that works with any chat AI, no API key required.",
+  },
+  {
+    name: "Direct Instagram analytics API",
+    purpose: "Auto-pull view/follower counts instead of manual entry",
+    status: "planned",
+    note: "Instagram has no public API for this use case -- not currently buildable. Logged here so it isn't forgotten if that changes.",
+  },
+  {
+    name: "ManyChat API integration",
+    purpose: "Create/update trigger-word automations directly from this app",
+    status: "planned",
+    note: "Possible future build -- ManyChat does have an API. Not built yet.",
+  },
+];
+
 export const FIVE_X_OUTLIER_RULE =
   "An outlier is a reel from a small-to-midsize creator that got at least 5x more views than their total follower count. That's the bar for 'proven' before you model it.";
 
 export const TRANSCRIPT_TEMPLATIZE_PROMPT =
   "This is a transcript from a viral video. Please make it into a script template that can be used for any niche. Keep the overall format/structure of the video and just make it the fill-in-the-blank version.";
+
+export const FUNNEL_GUIDANCE: Record<"tofu" | "mofu" | "bofu", { label: string; goal: string; instruction: string }> = {
+  tofu: {
+    label: "TOFU (Top of funnel)",
+    goal: "Reach a cold audience that doesn't know you yet.",
+    instruction:
+      "Open with your strongest, broadest-appeal hook. No hard ask -- the only job of this video is to earn a follow or a save. Don't reference your business/offer directly; let value speak for itself.",
+  },
+  mofu: {
+    label: "MOFU (Middle of funnel)",
+    goal: "Deepen trust with people who already follow or have seen you before.",
+    instruction:
+      "Go one layer deeper than a TOFU video -- more specific, more personal, or more advanced. Use a soft engagement CTA (ask a question, \"comment X\") to generate signal before pitching anything.",
+  },
+  bofu: {
+    label: "BOFU (Bottom of funnel)",
+    goal: "Convert a warm, ready audience into a lead or client.",
+    instruction:
+      "Speak directly to someone who already trusts you and is close to a decision. Use a strong, specific CTA (ManyChat trigger word, DM keyword, or a direct pitch) -- this is the video allowed to ask for something.",
+  },
+};
+
+export const CTA_GUIDANCE: Record<"follow" | "engagement" | "manychat" | "none", string> = {
+  follow: "Default for TOFU reach plays and proven-concept videos -- ask for a follow, nothing else.",
+  engagement: "\"Comment X\" plays -- good for MOFU when you want signal/interaction before a pitch.",
+  manychat: "Trigger-word → automated DM with your one bio link. Best for BOFU lead generation.",
+  none: "Pure value/brand exposure, no ask at all.",
+};
 
 export const CONTENT_TYPES = ["educational", "storytelling", "authority", "other"] as const;
 export const PILLARS = ["authority", "journey"] as const;
