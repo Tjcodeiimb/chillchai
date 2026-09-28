@@ -1,0 +1,83 @@
+import { sql } from "@/lib/db";
+import { backfillScriptMetadataAction, isBackfillDone } from "@/lib/actions";
+import { Card, SectionHeader, Badge } from "../components/ui";
+import LibraryClient from "./LibraryClient";
+
+export type LibraryScript = {
+  id: number;
+  title: string;
+  pillar: string;
+  content_type: string;
+  angle_or_story_type: string;
+  format: string;
+  cta_type: string;
+  funnel_stage: string;
+  status: string;
+  series_name: string;
+  effort: string;
+  topic_tag: string;
+  segment: string;
+  body_black: string;
+  body_red: string;
+  body_green: string;
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function LibraryPage() {
+  const [scripts, backfillDone] = await Promise.all([
+    sql<LibraryScript[]>`
+      SELECT id, title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage,
+             status, series_name, effort, topic_tag, segment, body_black, body_red, body_green
+      FROM scripts ORDER BY created_at DESC
+    `,
+    isBackfillDone(),
+  ]);
+
+  return (
+    <div>
+      <SectionHeader
+        num="10"
+        title="Script Library"
+        description="Every script from every batch, in one place -- filter by funnel stage, detail level, topic, and format."
+      />
+
+      {!backfillDone && (
+        <Card className="mb-6">
+          <p className="text-sm text-muted mb-3">
+            The detail-level and topic labels were added after some batches were already imported. Run this once to
+            backfill those labels onto scripts imported before this page existed -- new imports get them automatically.
+          </p>
+          <form action={backfillScriptMetadataAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Backfill labels on already-imported scripts
+            </button>
+          </form>
+        </Card>
+      )}
+
+      {scripts.length === 0 ? (
+        <Card>
+          <p className="text-sm text-muted">
+            No scripts yet -- import a batch from the{" "}
+            <a href="/calendar" className="text-accent underline">
+              Calendar
+            </a>{" "}
+            page, or add one manually in{" "}
+            <a href="/scripts" className="text-accent underline">
+              Script Studio
+            </a>
+            .
+          </p>
+        </Card>
+      ) : (
+        <>
+          <div className="mb-4 flex items-center gap-2">
+            <Badge tone="accent">{scripts.length} scripts total</Badge>
+          </div>
+          <LibraryClient scripts={scripts} />
+        </>
+      )}
+    </div>
+  );
+}

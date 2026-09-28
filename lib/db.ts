@@ -58,8 +58,14 @@ async function initSchema() {
       funnel_stage TEXT DEFAULT 'tofu',
       status TEXT NOT NULL DEFAULT 'idea',
       notes TEXT DEFAULT '',
+      effort TEXT NOT NULL DEFAULT 'default',
+      topic_tag TEXT NOT NULL DEFAULT '',
+      segment TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS effort TEXT NOT NULL DEFAULT 'default';
+    ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS topic_tag TEXT NOT NULL DEFAULT '';
+    ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT '';
 
     CREATE TABLE IF NOT EXISTS outlier_research (
       id SERIAL PRIMARY KEY,
@@ -103,8 +109,14 @@ async function initSchema() {
       funnel_stage TEXT DEFAULT 'tofu',
       status TEXT NOT NULL DEFAULT 'draft',
       series_name TEXT DEFAULT '',
+      effort TEXT NOT NULL DEFAULT 'default',
+      topic_tag TEXT NOT NULL DEFAULT '',
+      segment TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE scripts ADD COLUMN IF NOT EXISTS effort TEXT NOT NULL DEFAULT 'default';
+    ALTER TABLE scripts ADD COLUMN IF NOT EXISTS topic_tag TEXT NOT NULL DEFAULT '';
+    ALTER TABLE scripts ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT '';
 
     CREATE TABLE IF NOT EXISTS script_templates (
       id SERIAL PRIMARY KEY,

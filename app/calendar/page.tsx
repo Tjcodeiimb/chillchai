@@ -12,10 +12,13 @@ import {
   isGrowthBatchSeeded,
   seedCommentaryBatchAction,
   isCommentaryBatchSeeded,
+  seedSegmentsBatchAction,
+  isSegmentsBatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
 import { COMMENTARY_BATCH, COMMENTARY_START_WEEK } from "@/lib/seed-data/commentaryBatch";
+import { SEGMENTS_BATCH, SEGMENTS_START_WEEK } from "@/lib/seed-data/segmentsBatch";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 
@@ -39,13 +42,15 @@ type CalendarItem = {
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
-  const [brand, items, octBatchSeeded, growthBatchSeeded, commentaryBatchSeeded] = await Promise.all([
-    getBrand(),
-    sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
-    isOctoberBatchSeeded(),
-    isGrowthBatchSeeded(),
-    isCommentaryBatchSeeded(),
-  ]);
+  const [brand, items, octBatchSeeded, growthBatchSeeded, commentaryBatchSeeded, segmentsBatchSeeded] =
+    await Promise.all([
+      getBrand(),
+      sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
+      isOctoberBatchSeeded(),
+      isGrowthBatchSeeded(),
+      isCommentaryBatchSeeded(),
+      isSegmentsBatchSeeded(),
+    ]);
 
   const weekDate = (weekOffset: number) => {
     const d = new Date(`${BASE_DATE}T00:00:00Z`);
@@ -54,6 +59,7 @@ export default async function CalendarPage() {
   };
   const growthStartDate = weekDate(GROWTH_START_WEEK);
   const commentaryStartDate = weekDate(COMMENTARY_START_WEEK);
+  const segmentsStartDate = weekDate(SEGMENTS_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -167,6 +173,35 @@ export default async function CalendarPage() {
           <form action={seedCommentaryBatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import commentary batch ({COMMENTARY_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-8">
+        <h3 className="font-heading text-xl mb-2">Segments batch: {SEGMENTS_BATCH.length} scripts, 20 new formats</h3>
+        <p className="text-xs text-muted mb-3">
+          20 new content-format segments beyond the original 7 script angles and the 11 commentary source-types --
+          rank &amp; tier lists, rapid-fire myth vs reality, behind-the-scenes process reveals, anonymized client story
+          breakdowns, surprising stat reveals, objection roleplay, checklist walkthroughs, prediction/trend calls,
+          unpopular opinions, ELI5, day-in-the-life POV, pre-decision warnings, AI-tool reactions, client Q&amp;A rapid
+          fire, resource-tier thought experiments, red-flag spotting, one-chart explainers, founder voice-memo
+          reflections, compare-3-live, and unit-economics math -- 10 scripts each. TOFU{" "}
+          {SEGMENTS_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {SEGMENTS_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {SEGMENTS_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {segmentsStartDate}, continuing right after the commentary batch. Use the{" "}
+          <a href="/library" className="text-accent underline">
+            Script Library
+          </a>{" "}
+          to browse and filter every batch together once imported.
+        </p>
+        {segmentsBatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedSegmentsBatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import segments batch ({SEGMENTS_BATCH.length} scripts)
             </button>
           </form>
         )}

@@ -16,6 +16,7 @@ const SECTIONS = [
   { href: "/funnel", label: "CTA & Funnel Mapper", num: "07" },
   { href: "/prompts", label: "Master Prompt Library", num: "08" },
   { href: "/analytics", label: "Analytics & Levels", num: "09" },
+  { href: "/library", label: "Script Library", num: "10" },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
