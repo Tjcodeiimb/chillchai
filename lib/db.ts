@@ -1,45 +1,68 @@
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import postgres from "postgres";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || "";
 
-const DB_PATH = path.join(DATA_DIR, "chillchai.db");
-
-declare global {
-  var __chillchaiDb: Database.Database | undefined;
+if (!connectionString) {
+  throw new Error(
+    "DATABASE_URL is not set. Add your Supabase/Postgres connection string to .env.local (see .env.example)."
+  );
 }
 
-function createConnection() {
-  const db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
-  db.exec(`
+const isLocal = /localhost|127\.0\.0\.1/.test(connectionString);
+
+declare global {
+  var __chillchaiSql: ReturnType<typeof postgres> | undefined;
+}
+
+export const sql =
+  globalThis.__chillchaiSql ??
+  postgres(connectionString, {
+    ssl: isLocal ? false : "require",
+    // Supabase's pooled connection (pgbouncer, transaction mode) doesn't support
+    // server-side prepared statements.
+    prepare: false,
+  });
+
+if (process.env.NODE_ENV !== "production") globalThis.__chillchaiSql = sql;
+
+let schemaReady: Promise<void> | null = null;
+
+// Cheap to call repeatedly -- memoized after the first successful run, so
+// every query helper can safely call this before doing real work.
+export function ensureSchema(): Promise<void> {
+  if (!schemaReady) schemaReady = initSchema();
+  return schemaReady;
+}
+
+async function initSchema() {
+  await sql`
     CREATE TABLE IF NOT EXISTS brand_config (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
-    );
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS calendar_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       date TEXT NOT NULL,
       pillar TEXT NOT NULL DEFAULT 'authority',
       concept_bucket TEXT NOT NULL DEFAULT 'proven',
       content_type TEXT NOT NULL DEFAULT 'educational',
       topic TEXT NOT NULL DEFAULT '',
       angle TEXT DEFAULT '',
-      hook_stack_id INTEGER,
-      script_id INTEGER,
       format TEXT DEFAULT '',
       cta_type TEXT DEFAULT 'follow',
       funnel_stage TEXT DEFAULT 'tofu',
       status TEXT NOT NULL DEFAULT 'idea',
       notes TEXT DEFAULT '',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS outlier_research (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       source_type TEXT NOT NULL DEFAULT 'keyword',
       creator_handle TEXT DEFAULT '',
       link TEXT DEFAULT '',
@@ -51,24 +74,27 @@ function createConnection() {
       hook_visual TEXT DEFAULT '',
       angle TEXT DEFAULT '',
       notes TEXT DEFAULT '',
-      used INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      used BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS hook_stacks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       written TEXT DEFAULT '',
       verbal TEXT DEFAULT '',
       visual TEXT DEFAULT '',
       angle TEXT DEFAULT '',
       topic TEXT DEFAULT '',
-      source_outlier_id INTEGER,
-      saved INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      saved BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS scripts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT NOT NULL DEFAULT 'Untitled script',
       pillar TEXT NOT NULL DEFAULT 'authority',
       content_type TEXT NOT NULL DEFAULT 'educational',
@@ -77,38 +103,36 @@ function createConnection() {
       body_black TEXT DEFAULT '',
       body_red TEXT DEFAULT '',
       body_green TEXT DEFAULT '',
-      hook_stack_id INTEGER,
       cta_type TEXT DEFAULT 'follow',
       funnel_stage TEXT DEFAULT 'tofu',
       status TEXT NOT NULL DEFAULT 'draft',
       series_name TEXT DEFAULT '',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS script_templates (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL DEFAULT 'Untitled template',
       pillar TEXT NOT NULL DEFAULT 'authority',
       angle TEXT DEFAULT '',
       source_note TEXT DEFAULT '',
       template_text TEXT NOT NULL DEFAULT '',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS own_posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      calendar_item_id INTEGER,
+      id SERIAL PRIMARY KEY,
       title TEXT DEFAULT '',
       posted_date TEXT NOT NULL,
       views INTEGER DEFAULT 0,
       followers_at_post INTEGER DEFAULT 0,
       pillar TEXT DEFAULT 'authority',
       notes TEXT DEFAULT '',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-  return db;
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
 }
-
-export const db = globalThis.__chillchaiDb ?? createConnection();
-if (process.env.NODE_ENV !== "production") globalThis.__chillchaiDb = db;

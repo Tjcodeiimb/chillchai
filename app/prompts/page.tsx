@@ -2,8 +2,8 @@ import { getBrand } from "@/lib/brand";
 import { SectionHeader } from "../components/ui";
 import PromptsClient from "./PromptsClient";
 
-export default function PromptsPage() {
-  const brand = getBrand();
+export default async function PromptsPage() {
+  const brand = await getBrand();
   const hasKey = !!process.env.GEMINI_API_KEY;
 
   return (

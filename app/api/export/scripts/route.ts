@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { buildScriptBankDoc, toBuffer } from "@/lib/docx-export";
 
 type ScriptRow = {
@@ -20,8 +20,8 @@ export async function GET(req: NextRequest) {
   const unauthorized = requireAuth(req);
   if (unauthorized) return unauthorized;
 
-  const scripts = db.prepare("SELECT * FROM scripts ORDER BY created_at DESC").all() as ScriptRow[];
-  const templates = db.prepare("SELECT * FROM script_templates ORDER BY created_at DESC").all() as TemplateRow[];
+  const scripts = await sql<ScriptRow[]>`SELECT * FROM scripts ORDER BY created_at DESC`;
+  const templates = await sql<TemplateRow[]>`SELECT * FROM script_templates ORDER BY created_at DESC`;
 
   const buffer = await toBuffer(buildScriptBankDoc(scripts, templates));
 

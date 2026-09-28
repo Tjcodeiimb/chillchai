@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { buildCalendarIdeationPrompt } from "@/lib/prompts";
 import { SCRIPT_ANGLES, FILMING_FORMATS, CTA_TYPES, FUNNEL_STAGES, CALENDAR_STATUSES, CONCEPT_BUCKETS } from "@/lib/reference";
@@ -21,9 +21,9 @@ type CalendarItem = {
   notes: string;
 };
 
-export default function CalendarPage() {
-  const brand = getBrand();
-  const items = db.prepare("SELECT * FROM calendar_items ORDER BY date ASC").all() as CalendarItem[];
+export default async function CalendarPage() {
+  const brand = await getBrand();
+  const items = await sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`;
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;

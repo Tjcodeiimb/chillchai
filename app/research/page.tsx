@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { buildKeywordBankPrompt } from "@/lib/prompts";
 import { FIVE_X_OUTLIER_RULE, SCRIPT_ANGLES } from "@/lib/reference";
@@ -19,12 +19,12 @@ type Outlier = {
   hook_visual: string;
   angle: string;
   notes: string;
-  used: number;
+  used: boolean;
 };
 
-export default function ResearchPage() {
-  const brand = getBrand();
-  const rows = db.prepare("SELECT * FROM outlier_research ORDER BY created_at DESC").all() as Outlier[];
+export default async function ResearchPage() {
+  const brand = await getBrand();
+  const rows = await sql<Outlier[]>`SELECT * FROM outlier_research ORDER BY created_at DESC`;
   const keywordPrompt = buildKeywordBankPrompt(brand);
 
   const inputClass = "w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5";
@@ -148,7 +148,7 @@ export default function ResearchPage() {
                       {isOutlier && <Badge tone="accent">{multiple.toFixed(1)}x OUTLIER</Badge>}
                       {!isOutlier && r.follower_count > 0 && <Badge>{multiple.toFixed(1)}x</Badge>}
                       <Badge>{r.source_type}</Badge>
-                      {r.used === 1 && <Badge tone="accent">used</Badge>}
+                      {r.used && <Badge tone="accent">used</Badge>}
                     </div>
                   </div>
                   {(r.hook_written || r.hook_verbal || r.hook_visual) && (

@@ -1,19 +1,15 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { FILMING_FORMATS } from "@/lib/reference";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import ShotListClient from "./ShotListClient";
 import FolderNamer from "./FolderNamer";
 
-export default function ProductionPage() {
-  const brand = getBrand();
-  const scripts = db.prepare("SELECT id, title, body_black, body_red, body_green FROM scripts ORDER BY created_at DESC").all() as {
-    id: number;
-    title: string;
-    body_black: string;
-    body_red: string;
-    body_green: string;
-  }[];
+export default async function ProductionPage() {
+  const brand = await getBrand();
+  const scripts = await sql<
+    { id: number; title: string; body_black: string; body_red: string; body_green: string }[]
+  >`SELECT id, title, body_black, body_red, body_green FROM scripts ORDER BY created_at DESC`;
 
   return (
     <div>

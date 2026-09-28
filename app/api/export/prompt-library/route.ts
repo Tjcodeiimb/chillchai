@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const unauthorized = requireAuth(req);
   if (unauthorized) return unauthorized;
 
-  const brand = getBrand();
+  const brand = await getBrand();
   const buffer = await toBuffer(buildPromptLibraryDoc(brand));
 
   return new NextResponse(new Uint8Array(buffer), {

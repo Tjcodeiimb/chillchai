@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { sql, ensureSchema } from "./db";
 
 export type BrandConfig = {
   handle: string;
@@ -89,30 +89,26 @@ export const DEFAULT_BRAND: BrandConfig = {
     "Has real footage/photos from being depressed at 18 after failing entrance exams -- a ready-made Loss Story / Transformation Story anchor.",
 };
 
-function ensureSeed() {
-  const row = db.prepare("SELECT value FROM brand_config WHERE key = 'brand'").get() as
-    | { value: string }
-    | undefined;
-  if (!row) {
-    db.prepare("INSERT INTO brand_config (key, value) VALUES ('brand', ?)").run(
-      JSON.stringify(DEFAULT_BRAND)
-    );
+async function ensureSeed() {
+  await ensureSchema();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = 'brand'`;
+  if (rows.length === 0) {
+    await sql`INSERT INTO brand_config (key, value) VALUES ('brand', ${JSON.stringify(DEFAULT_BRAND)})`;
   }
 }
 
-export function getBrand(): BrandConfig {
-  ensureSeed();
-  const row = db.prepare("SELECT value FROM brand_config WHERE key = 'brand'").get() as {
-    value: string;
-  };
-  return { ...DEFAULT_BRAND, ...JSON.parse(row.value) };
+export async function getBrand(): Promise<BrandConfig> {
+  await ensureSeed();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = 'brand'`;
+  return { ...DEFAULT_BRAND, ...JSON.parse(rows[0].value) };
 }
 
-export function updateBrand(partial: Partial<BrandConfig>) {
-  const current = getBrand();
+export async function updateBrand(partial: Partial<BrandConfig>): Promise<BrandConfig> {
+  const current = await getBrand();
   const next = { ...current, ...partial };
-  db.prepare("INSERT INTO brand_config (key, value) VALUES ('brand', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(
-    JSON.stringify(next)
-  );
+  await sql`
+    INSERT INTO brand_config (key, value) VALUES ('brand', ${JSON.stringify(next)})
+    ON CONFLICT (key) DO UPDATE SET value = excluded.value
+  `;
   return next;
 }

@@ -1,12 +1,12 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { SectionHeader } from "../components/ui";
 import ScriptsClient from "./ScriptsClient";
 
-export default function ScriptsPage() {
-  const brand = getBrand();
-  const scripts = db.prepare("SELECT * FROM scripts ORDER BY created_at DESC").all();
-  const templates = db.prepare("SELECT * FROM script_templates ORDER BY created_at DESC").all();
+export default async function ScriptsPage() {
+  const brand = await getBrand();
+  const scripts = await sql`SELECT * FROM scripts ORDER BY created_at DESC`;
+  const templates = await sql`SELECT * FROM script_templates ORDER BY created_at DESC`;
 
   return (
     <div>

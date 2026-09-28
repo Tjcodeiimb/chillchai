@@ -3,8 +3,8 @@ import { PROFILE_RIGHT_WRONG } from "@/lib/reference";
 import { Card, SectionHeader } from "../components/ui";
 import BrandForm from "./BrandForm";
 
-export default function BrandPage() {
-  const brand = getBrand();
+export default async function BrandPage() {
+  const brand = await getBrand();
 
   return (
     <div>

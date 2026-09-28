@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "./db";
+import { sql, ensureSchema } from "./db";
 import { updateBrand, BrandConfig } from "./brand";
 
 function val(fd: FormData, key: string, fallback = "") {
@@ -19,43 +19,34 @@ function id(fd: FormData) {
 
 // ---------- Brand ----------
 export async function saveBrandAction(partial: Partial<BrandConfig>) {
-  updateBrand(partial);
+  await updateBrand(partial);
   revalidatePath("/brand");
   revalidatePath("/");
 }
 
 // ---------- Calendar ----------
 export async function createCalendarItem(fd: FormData) {
-  db.prepare(
-    `INSERT INTO calendar_items (date, pillar, concept_bucket, content_type, topic, angle, format, cta_type, funnel_stage, status, notes)
-     VALUES (@date, @pillar, @concept_bucket, @content_type, @topic, @angle, @format, @cta_type, @funnel_stage, @status, @notes)`
-  ).run({
-    date: val(fd, "date"),
-    pillar: val(fd, "pillar", "authority"),
-    concept_bucket: val(fd, "concept_bucket", "proven"),
-    content_type: val(fd, "content_type", "educational"),
-    topic: val(fd, "topic"),
-    angle: val(fd, "angle"),
-    format: val(fd, "format"),
-    cta_type: val(fd, "cta_type", "follow"),
-    funnel_stage: val(fd, "funnel_stage", "tofu"),
-    status: val(fd, "status", "idea"),
-    notes: val(fd, "notes"),
-  });
+  await ensureSchema();
+  await sql`
+    INSERT INTO calendar_items (date, pillar, concept_bucket, content_type, topic, angle, format, cta_type, funnel_stage, status, notes)
+    VALUES (${val(fd, "date")}, ${val(fd, "pillar", "authority")}, ${val(fd, "concept_bucket", "proven")}, ${val(fd, "content_type", "educational")}, ${val(fd, "topic")}, ${val(fd, "angle")}, ${val(fd, "format")}, ${val(fd, "cta_type", "follow")}, ${val(fd, "funnel_stage", "tofu")}, ${val(fd, "status", "idea")}, ${val(fd, "notes")})
+  `;
   revalidatePath("/calendar");
   revalidatePath("/");
   revalidatePath("/funnel");
 }
 
 export async function updateCalendarItemStatus(fd: FormData) {
-  db.prepare("UPDATE calendar_items SET status = ? WHERE id = ?").run(val(fd, "status", "idea"), id(fd));
+  await ensureSchema();
+  await sql`UPDATE calendar_items SET status = ${val(fd, "status", "idea")} WHERE id = ${id(fd)}`;
   revalidatePath("/calendar");
   revalidatePath("/");
   revalidatePath("/funnel");
 }
 
 export async function deleteCalendarItem(fd: FormData) {
-  db.prepare("DELETE FROM calendar_items WHERE id = ?").run(id(fd));
+  await ensureSchema();
+  await sql`DELETE FROM calendar_items WHERE id = ${id(fd)}`;
   revalidatePath("/calendar");
   revalidatePath("/");
   revalidatePath("/funnel");
@@ -63,122 +54,89 @@ export async function deleteCalendarItem(fd: FormData) {
 
 // ---------- Outlier research ----------
 export async function createOutlier(fd: FormData) {
-  db.prepare(
-    `INSERT INTO outlier_research (source_type, creator_handle, link, niche_keyword, follower_count, views, hook_written, hook_verbal, hook_visual, angle, notes)
-     VALUES (@source_type, @creator_handle, @link, @niche_keyword, @follower_count, @views, @hook_written, @hook_verbal, @hook_visual, @angle, @notes)`
-  ).run({
-    source_type: val(fd, "source_type", "keyword"),
-    creator_handle: val(fd, "creator_handle"),
-    link: val(fd, "link"),
-    niche_keyword: val(fd, "niche_keyword"),
-    follower_count: num(fd, "follower_count"),
-    views: num(fd, "views"),
-    hook_written: val(fd, "hook_written"),
-    hook_verbal: val(fd, "hook_verbal"),
-    hook_visual: val(fd, "hook_visual"),
-    angle: val(fd, "angle"),
-    notes: val(fd, "notes"),
-  });
+  await ensureSchema();
+  await sql`
+    INSERT INTO outlier_research (source_type, creator_handle, link, niche_keyword, follower_count, views, hook_written, hook_verbal, hook_visual, angle, notes)
+    VALUES (${val(fd, "source_type", "keyword")}, ${val(fd, "creator_handle")}, ${val(fd, "link")}, ${val(fd, "niche_keyword")}, ${num(fd, "follower_count")}, ${num(fd, "views")}, ${val(fd, "hook_written")}, ${val(fd, "hook_verbal")}, ${val(fd, "hook_visual")}, ${val(fd, "angle")}, ${val(fd, "notes")})
+  `;
   revalidatePath("/research");
 }
 
 export async function toggleOutlierUsed(fd: FormData) {
-  const current = db.prepare("SELECT used FROM outlier_research WHERE id = ?").get(id(fd)) as
-    | { used: number }
-    | undefined;
-  db.prepare("UPDATE outlier_research SET used = ? WHERE id = ?").run(current?.used ? 0 : 1, id(fd));
+  await ensureSchema();
+  await sql`UPDATE outlier_research SET used = NOT used WHERE id = ${id(fd)}`;
   revalidatePath("/research");
 }
 
 export async function deleteOutlier(fd: FormData) {
-  db.prepare("DELETE FROM outlier_research WHERE id = ?").run(id(fd));
+  await ensureSchema();
+  await sql`DELETE FROM outlier_research WHERE id = ${id(fd)}`;
   revalidatePath("/research");
 }
 
 // ---------- Hook stacks ----------
 export async function createHookStack(fd: FormData) {
-  db.prepare(
-    `INSERT INTO hook_stacks (written, verbal, visual, angle, topic) VALUES (@written, @verbal, @visual, @angle, @topic)`
-  ).run({
-    written: val(fd, "written"),
-    verbal: val(fd, "verbal"),
-    visual: val(fd, "visual"),
-    angle: val(fd, "angle"),
-    topic: val(fd, "topic"),
-  });
+  await ensureSchema();
+  await sql`
+    INSERT INTO hook_stacks (written, verbal, visual, angle, topic)
+    VALUES (${val(fd, "written")}, ${val(fd, "verbal")}, ${val(fd, "visual")}, ${val(fd, "angle")}, ${val(fd, "topic")})
+  `;
   revalidatePath("/hooks");
 }
 
 export async function deleteHookStack(fd: FormData) {
-  db.prepare("DELETE FROM hook_stacks WHERE id = ?").run(id(fd));
+  await ensureSchema();
+  await sql`DELETE FROM hook_stacks WHERE id = ${id(fd)}`;
   revalidatePath("/hooks");
 }
 
 // ---------- Scripts ----------
 export async function createScript(fd: FormData) {
-  db.prepare(
-    `INSERT INTO scripts (title, pillar, content_type, angle_or_story_type, format, body_black, body_red, body_green, cta_type, funnel_stage, status, series_name)
-     VALUES (@title, @pillar, @content_type, @angle_or_story_type, @format, @body_black, @body_red, @body_green, @cta_type, @funnel_stage, @status, @series_name)`
-  ).run({
-    title: val(fd, "title", "Untitled script"),
-    pillar: val(fd, "pillar", "authority"),
-    content_type: val(fd, "content_type", "educational"),
-    angle_or_story_type: val(fd, "angle_or_story_type"),
-    format: val(fd, "format"),
-    body_black: val(fd, "body_black"),
-    body_red: val(fd, "body_red"),
-    body_green: val(fd, "body_green"),
-    cta_type: val(fd, "cta_type", "follow"),
-    funnel_stage: val(fd, "funnel_stage", "tofu"),
-    status: val(fd, "status", "draft"),
-    series_name: val(fd, "series_name"),
-  });
+  await ensureSchema();
+  await sql`
+    INSERT INTO scripts (title, pillar, content_type, angle_or_story_type, format, body_black, body_red, body_green, cta_type, funnel_stage, status, series_name)
+    VALUES (${val(fd, "title", "Untitled script")}, ${val(fd, "pillar", "authority")}, ${val(fd, "content_type", "educational")}, ${val(fd, "angle_or_story_type")}, ${val(fd, "format")}, ${val(fd, "body_black")}, ${val(fd, "body_red")}, ${val(fd, "body_green")}, ${val(fd, "cta_type", "follow")}, ${val(fd, "funnel_stage", "tofu")}, ${val(fd, "status", "draft")}, ${val(fd, "series_name")})
+  `;
   revalidatePath("/scripts");
   revalidatePath("/production");
 }
 
 export async function deleteScript(fd: FormData) {
-  db.prepare("DELETE FROM scripts WHERE id = ?").run(id(fd));
+  await ensureSchema();
+  await sql`DELETE FROM scripts WHERE id = ${id(fd)}`;
   revalidatePath("/scripts");
   revalidatePath("/production");
 }
 
 export async function createScriptTemplate(fd: FormData) {
-  db.prepare(
-    `INSERT INTO script_templates (name, pillar, angle, source_note, template_text) VALUES (@name, @pillar, @angle, @source_note, @template_text)`
-  ).run({
-    name: val(fd, "name", "Untitled template"),
-    pillar: val(fd, "pillar", "authority"),
-    angle: val(fd, "angle"),
-    source_note: val(fd, "source_note"),
-    template_text: val(fd, "template_text"),
-  });
+  await ensureSchema();
+  await sql`
+    INSERT INTO script_templates (name, pillar, angle, source_note, template_text)
+    VALUES (${val(fd, "name", "Untitled template")}, ${val(fd, "pillar", "authority")}, ${val(fd, "angle")}, ${val(fd, "source_note")}, ${val(fd, "template_text")})
+  `;
   revalidatePath("/scripts");
 }
 
 export async function deleteScriptTemplate(fd: FormData) {
-  db.prepare("DELETE FROM script_templates WHERE id = ?").run(id(fd));
+  await ensureSchema();
+  await sql`DELETE FROM script_templates WHERE id = ${id(fd)}`;
   revalidatePath("/scripts");
 }
 
 // ---------- Own posts / analytics ----------
 export async function createOwnPost(fd: FormData) {
-  db.prepare(
-    `INSERT INTO own_posts (title, posted_date, views, followers_at_post, pillar, notes) VALUES (@title, @posted_date, @views, @followers_at_post, @pillar, @notes)`
-  ).run({
-    title: val(fd, "title"),
-    posted_date: val(fd, "posted_date"),
-    views: num(fd, "views"),
-    followers_at_post: num(fd, "followers_at_post"),
-    pillar: val(fd, "pillar", "authority"),
-    notes: val(fd, "notes"),
-  });
+  await ensureSchema();
+  await sql`
+    INSERT INTO own_posts (title, posted_date, views, followers_at_post, pillar, notes)
+    VALUES (${val(fd, "title")}, ${val(fd, "posted_date")}, ${num(fd, "views")}, ${num(fd, "followers_at_post")}, ${val(fd, "pillar", "authority")}, ${val(fd, "notes")})
+  `;
   revalidatePath("/analytics");
   revalidatePath("/");
 }
 
 export async function deleteOwnPost(fd: FormData) {
-  db.prepare("DELETE FROM own_posts WHERE id = ?").run(id(fd));
+  await ensureSchema();
+  await sql`DELETE FROM own_posts WHERE id = ${id(fd)}`;
   revalidatePath("/analytics");
   revalidatePath("/");
 }

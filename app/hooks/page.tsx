@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { SCRIPT_ANGLES, UNIVERSAL_HOOK_TEMPLATES } from "@/lib/reference";
 import { createHookStack, deleteHookStack } from "@/lib/actions";
@@ -14,9 +14,9 @@ type HookStack = {
   topic: string;
 };
 
-export default function HooksPage() {
-  const brand = getBrand();
-  const stacks = db.prepare("SELECT * FROM hook_stacks ORDER BY created_at DESC").all() as HookStack[];
+export default async function HooksPage() {
+  const brand = await getBrand();
+  const stacks = await sql<HookStack[]>`SELECT * FROM hook_stacks ORDER BY created_at DESC`;
   const inputClass = "w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5";
   const selectClass = inputClass;
 

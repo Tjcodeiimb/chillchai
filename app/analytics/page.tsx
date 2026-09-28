@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { createOwnPost, deleteOwnPost } from "@/lib/actions";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
@@ -14,9 +14,9 @@ type Post = {
   notes: string;
 };
 
-export default function AnalyticsPage() {
-  const brand = getBrand();
-  const posts = db.prepare("SELECT * FROM own_posts ORDER BY posted_date DESC").all() as Post[];
+export default async function AnalyticsPage() {
+  const brand = await getBrand();
+  const posts = await sql<Post[]>`SELECT * FROM own_posts ORDER BY posted_date DESC`;
 
   const withMultiple = posts.map((p) => ({
     ...p,

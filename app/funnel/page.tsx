@@ -1,13 +1,15 @@
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import CaptionGenerator from "./CaptionGenerator";
 
 type Item = { id: number; topic: string; funnel_stage: string; cta_type: string; status: string };
 
-export default function FunnelPage() {
-  const brand = getBrand();
-  const items = db.prepare("SELECT id, topic, funnel_stage, cta_type, status FROM calendar_items ORDER BY date ASC").all() as Item[];
+export default async function FunnelPage() {
+  const brand = await getBrand();
+  const items = await sql<Item[]>`
+    SELECT id, topic, funnel_stage, cta_type, status FROM calendar_items ORDER BY date ASC
+  `;
 
   const stages: Item["funnel_stage"][] = ["tofu", "mofu", "bofu"];
 

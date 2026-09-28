@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { Card, SectionHeader, Badge } from "./components/ui";
 
@@ -9,29 +9,29 @@ function levelFor(followers: number) {
   return { level: 3, floor: 10000, ceil: 100000, name: "Personal Brand (10k -> 100k)" };
 }
 
-export default function DashboardPage() {
-  const brand = getBrand();
+export default async function DashboardPage() {
+  const brand = await getBrand();
   const level = levelFor(brand.followerCount);
   const progressPct = Math.min(
     100,
     Math.round(((brand.followerCount - level.floor) / (level.ceil - level.floor)) * 100)
   );
 
-  const pillarCounts = db
-    .prepare("SELECT pillar, COUNT(*) as n FROM calendar_items GROUP BY pillar")
-    .all() as { pillar: string; n: number }[];
-  const conceptCounts = db
-    .prepare("SELECT concept_bucket, COUNT(*) as n FROM calendar_items GROUP BY concept_bucket")
-    .all() as { concept_bucket: string; n: number }[];
+  const pillarCounts = await sql<{ pillar: string; n: number }[]>`
+    SELECT pillar, COUNT(*)::int as n FROM calendar_items GROUP BY pillar
+  `;
+  const conceptCounts = await sql<{ concept_bucket: string; n: number }[]>`
+    SELECT concept_bucket, COUNT(*)::int as n FROM calendar_items GROUP BY concept_bucket
+  `;
   const totalItems = pillarCounts.reduce((s, r) => s + r.n, 0);
 
   const authorityCount = pillarCounts.find((r) => r.pillar === "authority")?.n ?? 0;
   const authorityPct = totalItems ? Math.round((authorityCount / totalItems) * 100) : 0;
   const journeyPct = totalItems ? 100 - authorityPct : 0;
 
-  const upcoming = db
-    .prepare("SELECT * FROM calendar_items WHERE status != 'posted' ORDER BY date ASC LIMIT 6")
-    .all() as { id: number; date: string; topic: string; pillar: string; status: string }[];
+  const upcoming = await sql<{ id: number; date: string; topic: string; pillar: string; status: string }[]>`
+    SELECT * FROM calendar_items WHERE status != 'posted' ORDER BY date ASC LIMIT 6
+  `;
 
   const links = [
     { href: "/brand", label: "Brand Foundation", desc: "Niche, story, visual identity, profile" },

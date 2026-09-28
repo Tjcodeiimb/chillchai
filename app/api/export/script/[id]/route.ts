@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { sql } from "@/lib/db";
 import { buildScriptDoc, toBuffer } from "@/lib/docx-export";
 
 type ScriptRow = {
@@ -21,7 +21,8 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/export/scrip
   if (unauthorized) return unauthorized;
 
   const { id } = await ctx.params;
-  const script = db.prepare("SELECT * FROM scripts WHERE id = ?").get(Number(id)) as ScriptRow | undefined;
+  const rows = await sql<ScriptRow[]>`SELECT * FROM scripts WHERE id = ${Number(id)}`;
+  const script = rows[0];
   if (!script) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }

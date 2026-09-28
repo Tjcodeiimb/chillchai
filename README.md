@@ -14,28 +14,31 @@ Nothing is locked behind the API key — it's a convenience, not a requirement.
 
 ## Where to run this
 
-**Local, on your own machine** — the simplest option, and all you need if you're the only one
-using it:
+**Stack: Vercel (hosting) + Supabase (Postgres database).** The app is a standard Next.js app
+with no filesystem dependency, so it fits Vercel's serverless model cleanly — all state lives in
+Postgres, not on disk.
+
+**Local, on your own machine:**
 
 ```bash
 npm install
-cp .env.example .env.local   # optional — add your Gemini API key here
+cp .env.example .env.local   # add DATABASE_URL, optionally GEMINI_API_KEY
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Data lives in a local SQLite file (see
-below) — nothing leaves your machine unless you turn on Gemini generation.
+`DATABASE_URL` can point at a local Postgres (`postgres://postgres:postgres@localhost:5432/chillchai`)
+or directly at your Supabase project — either works for local dev. Tables are created
+automatically on first request; there's no separate migration step.
 
-**Deployed somewhere you can reach from your phone** — see [Deployment](#deployment) below. Set
-`APP_PASSWORD` first (see [Authentication](#authentication)) if you do this, since the app has no
-login by default and would otherwise be open to anyone with the URL.
+**Deployed on Vercel** — see [Deployment](#deployment) below. Set `APP_PASSWORD` first (see
+[Authentication](#authentication)), since the app has no login by default and would otherwise be
+open to anyone with the URL.
 
 ## Data storage
 
-Calendar items, hook stacks, scripts, research log, and analytics are stored locally in
-`data/chillchai.db` (SQLite, created automatically on first run). It's git-ignored. This matters
-for deployment: SQLite is a single file on disk, so **the app needs a persistent filesystem and a
-single long-running process** — see the platform notes below.
+Calendar items, hook stacks, scripts, research log, and analytics all live in Postgres, via the
+`postgres` (postgres.js) client in `lib/db.ts`. Schema is created idempotently on first query
+(`ensureSchema()`), so there's nothing to run manually after setting `DATABASE_URL`.
 
 ## Authentication
 
@@ -53,47 +56,28 @@ anywhere reachable from the open internet.
 
 ## Deployment
 
-The app is a standard Next.js server (`output: "standalone"` is already configured) plus a local
-SQLite file. That combination means:
+### 1. Create the Supabase project
 
-- ✅ **Good fits**: Railway, Fly.io, Render, a plain VPS (DigitalOcean/Hetzner/etc.), or Replit —
-  anywhere that gives you one long-running Node process with a persistent disk/volume you can
-  mount at `/app/data`.
-- ❌ **Avoid serverless platforms as configured** (Vercel's default serverless functions, AWS
-  Lambda, etc.). Their filesystem is ephemeral and/or split across multiple instances, so the
-  SQLite file would reset or go out of sync between requests. You'd need to swap SQLite for a
-  hosted database (e.g. Turso/libSQL, Neon/Supabase Postgres) to run there — not set up in this
-  repo.
+- Create a project at [supabase.com](https://supabase.com).
+- Go to **Project Settings → Database → Connection string** and copy the **Transaction pooler**
+  string (port `6543`) — this is the one to use on Vercel, since serverless functions open many
+  short-lived connections and the pooler handles that; a direct connection (port `5432`) would
+  exhaust Postgres's connection limit under load.
+- That string is your `DATABASE_URL`.
 
-### Docker
+### 2. Deploy to Vercel
 
-A multi-stage `Dockerfile` is included:
+- Import this repo at [vercel.com/new](https://vercel.com/new) (or `vercel deploy` via the CLI).
+- Add environment variables in the Vercel project's **Settings → Environment Variables**:
+  - `DATABASE_URL` — the Supabase pooler string from step 1.
+  - `APP_PASSWORD` — required before this is public; pick a real password.
+  - `SESSION_SECRET` — `openssl rand -base64 32`.
+  - `GEMINI_API_KEY` / `GEMINI_MODEL` — optional, enables live "Generate with Gemini".
+- Deploy. Vercel builds and hosts the app; tables are created automatically the first time any
+  page hits the database.
 
-```bash
-docker build -t chillchai .
-docker run -p 3000:3000 \
-  -e APP_PASSWORD=your-password \
-  -e GEMINI_API_KEY=your-key \
-  -v chillchai_data:/app/data \
-  chillchai
-```
-
-The `-v chillchai_data:/app/data` volume is what makes your data survive restarts/redeploys —
-without it, every new container starts with an empty database. Point Railway/Fly.io/Render's
-volume feature at `/app/data` the same way.
-
-### Plain Node (no Docker)
-
-Works the same way on a VPS:
-
-```bash
-npm ci
-npm run build
-APP_PASSWORD=your-password GEMINI_API_KEY=your-key npm run start
-```
-
-Put a reverse proxy (nginx, Caddy) in front for TLS; see Next.js's own
-[self-hosting guide](https://nextjs.org/docs/app/guides/self-hosting) for the general pattern.
+No Docker, no persistent volume, no long-running process to manage — Vercel's serverless
+functions and Supabase's connection pooler are built for exactly this combination.
 
 ## Exporting to Word
 
@@ -129,9 +113,11 @@ Exports are generated server-side with the `docx` package — no third-party ser
 
 ## Stack
 
-Next.js 16 (App Router, Proxy for auth) + TypeScript + Tailwind CSS v4 + better-sqlite3 +
-`@google/generative-ai` + `docx`. All mutations run through Server Actions in `lib/actions.ts`;
-prompt templates live in `lib/prompts.ts`; the playbook's static reference content (hook angles,
-story types, filming formats, etc.) lives in `lib/reference.ts`; your brand config lives in
-`lib/brand.ts` and is editable from the Brand Foundation page; Word export builders live in
-`lib/docx-export.ts`; auth lives in `lib/auth.ts` / `proxy.ts`.
+Next.js 16 (App Router, Proxy for auth) + TypeScript + Tailwind CSS v4 + Postgres (via
+[`postgres`](https://github.com/porsager/postgres), typically Supabase) + `@google/generative-ai`
++ `docx`, deployed on Vercel. All mutations run through Server Actions in `lib/actions.ts`; the
+Postgres client and schema live in `lib/db.ts`; prompt templates live in `lib/prompts.ts`; the
+playbook's static reference content (hook angles, story types, filming formats, etc.) lives in
+`lib/reference.ts`; your brand config lives in `lib/brand.ts` and is editable from the Brand
+Foundation page; Word export builders live in `lib/docx-export.ts`; auth lives in `lib/auth.ts` /
+`proxy.ts`.
