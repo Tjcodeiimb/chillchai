@@ -7,6 +7,8 @@ import {
   HOOK_STACK_EXAMPLES,
   HISTORICAL_MEDIA_TIP,
   SCRIPT_CRAFT_RULES,
+  SCRIPT_ANGLES,
+  FILMING_FORMATS,
 } from "./reference";
 
 function craftRulesBlock() {
@@ -390,4 +392,102 @@ TASK: Deconstruct exactly why this video worked. Break it down into:
 5. What's replicable vs. what's specific to that creator/niche (so I know what to actually copy vs. leave behind).
 
 Be blunt about what's actually doing the work vs. what's incidental -- a good deconstruction says "the hook works because it names a specific dollar amount," not "the hook is engaging."`;
+}
+
+// ---------- Script Improver ----------
+// Diagnose -> prioritize -> targeted rewrite, per the research pattern for
+// editing-existing-content prompts: an LLM told to "just improve this"
+// tends to rewrite wholesale, discarding lines that already worked. Forcing
+// an explicit severity-tagged diagnosis first, then a fix plan ordered by
+// severity, then a rewrite that's instructed to preserve what wasn't
+// flagged, keeps the revision targeted instead of a full regeneration.
+
+function allFormatsGuide() {
+  return FILMING_FORMATS.map((f) => `- ${f.name}: ${f.description}`).join("\n");
+}
+
+function allAnglesGuide() {
+  return SCRIPT_ANGLES.map((a) => `- ${a.name}: ${a.description}`).join("\n");
+}
+
+function allFunnelGuide() {
+  return (Object.keys(FUNNEL_GUIDANCE) as (keyof typeof FUNNEL_GUIDANCE)[])
+    .map((k) => `- ${FUNNEL_GUIDANCE[k].label}: ${FUNNEL_GUIDANCE[k].goal} ${FUNNEL_GUIDANCE[k].instruction}`)
+    .join("\n");
+}
+
+function allCtaGuide() {
+  return (Object.keys(CTA_GUIDANCE) as (keyof typeof CTA_GUIDANCE)[])
+    .map((k) => `- ${k}: ${CTA_GUIDANCE[k]}`)
+    .join("\n");
+}
+
+export function buildScriptImproverPrompt(
+  brand: BrandConfig,
+  opts: {
+    bodyBlack: string;
+    bodyRed?: string;
+    bodyGreen?: string;
+    pillar?: string;
+    contentType?: string;
+    angleOrStoryType?: string;
+    format?: string;
+    funnelStage?: "tofu" | "mofu" | "bofu";
+    ctaType?: "follow" | "engagement" | "manychat" | "none";
+    focusNotes?: string;
+  }
+) {
+  const currentContext = [
+    opts.pillar ? `Pillar: ${opts.pillar}` : null,
+    opts.contentType ? `Content type: ${opts.contentType}` : null,
+    opts.angleOrStoryType ? `Angle / story type: ${opts.angleOrStoryType}` : null,
+    opts.format ? `Filming format: ${opts.format}` : null,
+    opts.funnelStage ? `Funnel stage: ${FUNNEL_GUIDANCE[opts.funnelStage].label} -- ${FUNNEL_GUIDANCE[opts.funnelStage].goal}` : null,
+    opts.ctaType ? `CTA type: ${opts.ctaType} -- ${CTA_GUIDANCE[opts.ctaType]}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return `${brandContext(brand)}
+
+TASK: You're being handed an EXISTING script to improve, not asked to write a new one from scratch. Diagnose it, prioritize the fixes, then do a targeted rewrite -- don't discard what already works.
+
+${currentContext ? `CURRENT METADATA (may be wrong -- correct it in your diagnosis if the script doesn't actually fit):\n${currentContext}\n` : ""}
+EXISTING SCRIPT:
+BLACK (spoken):
+${opts.bodyBlack}
+${opts.bodyRed ? `\nRED (camera/action):\n${opts.bodyRed}` : ""}
+${opts.bodyGreen ? `\nGREEN (editing):\n${opts.bodyGreen}` : ""}
+
+${opts.focusNotes ? `SPECIFIC FOCUS FOR THIS PASS (prioritize this over generic cleanup): ${opts.focusNotes}\n` : ""}
+REFERENCE -- every format, angle, funnel stage, and CTA type this app tracks, so you can recommend a change of any of these if the script would work better in a different one, not just polish the one it's already in:
+
+Filming formats:
+${allFormatsGuide()}
+
+Script angles:
+${allAnglesGuide()}
+
+Funnel stages:
+${allFunnelGuide()}
+
+CTA types:
+${allCtaGuide()}
+
+${craftRulesBlock()}
+
+Work through this in 3 explicit phases, in order. Do not skip ahead.
+
+PHASE 1 -- <diagnosis>: List every weakness in the existing script. For each one, cite the exact line or beat, name the failure category (hook / pacing / specificity / craft-rule violation / CTA-funnel mismatch / format mismatch / persuasion structure), and tag its severity as HIGH, MEDIUM, or LOW. Be adversarial -- you are a ruthless editor reviewing a stranger's draft, not the person who wrote it. Also explicitly note anything that's already strong and should NOT be touched (a real hook, a specific number, a line with real proof) -- name it so it survives the rewrite.
+
+PHASE 2 -- <fix_plan>: Order the HIGH severity issues first, then MEDIUM, then LOW. For each, state the specific fix (not "make it better" -- the actual replacement line, structural change, or format/angle/funnel/CTA swap, citing the reference guide above if a swap is recommended). If everything is already strong, say so explicitly instead of inventing fixes to seem thorough.
+
+PHASE 3 -- <revised_script>: Rewrite the script implementing every fix from the plan, in priority order, while explicitly preserving every line flagged as already-strong in Phase 1 -- don't regenerate what wasn't broken. Before finalizing, re-check the result against the crisp-script rules above, one by one. Then output ONLY the final result in this exact format, nothing before or after:
+BLACK (spoken dialogue, line by line):
+- ...
+RED (physical actions / camera movement instructions):
+- ...
+GREEN (editing / graphic instructions for the editor):
+- ...
+(If you recommended a format, angle, funnel stage, or CTA change in Phase 2, state it in one line above the BLACK section, then write the script for the NEW recommendation, not the old one.)`;
 }

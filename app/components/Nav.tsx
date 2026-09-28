@@ -17,6 +17,7 @@ const SECTIONS = [
   { href: "/prompts", label: "Master Prompt Library", num: "08" },
   { href: "/analytics", label: "Analytics & Levels", num: "09" },
   { href: "/library", label: "Script Library", num: "10" },
+  { href: "/improve", label: "Script Improver", num: "11" },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
