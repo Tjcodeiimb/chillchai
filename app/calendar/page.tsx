@@ -26,6 +26,8 @@ import {
   isNewCategories6BatchSeeded,
   seedJourneyBatchAction,
   isJourneyBatchSeeded,
+  seedCategories7BatchAction,
+  isCategories7BatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
@@ -38,6 +40,7 @@ import { NEW_CATEGORIES_4_BATCH, NEW_CATEGORIES_4_START_WEEK } from "@/lib/seed-
 import { NEW_CATEGORIES_5_BATCH, NEW_CATEGORIES_5_START_WEEK } from "@/lib/seed-data/newCategoriesBatch5";
 import { NEW_CATEGORIES_6_BATCH, NEW_CATEGORIES_6_START_WEEK } from "@/lib/seed-data/newCategoriesBatch6";
 import { JOURNEY_BATCH, JOURNEY_START_WEEK } from "@/lib/seed-data/journeyBatch";
+import { CATEGORIES_7_BATCH, CATEGORIES_7_START_WEEK } from "@/lib/seed-data/categoriesBatch7";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 import CalendarClient, { type CalendarItem, type PickerScript, ResetCalendarButton } from "./CalendarClient";
@@ -62,6 +65,7 @@ export default async function CalendarPage() {
     newCategories5BatchSeeded,
     newCategories6BatchSeeded,
     journeyBatchSeeded,
+    categories7BatchSeeded,
   ] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
@@ -77,6 +81,7 @@ export default async function CalendarPage() {
     isNewCategories5BatchSeeded(),
     isNewCategories6BatchSeeded(),
     isJourneyBatchSeeded(),
+    isCategories7BatchSeeded(),
   ]);
 
   const weekDate = (weekOffset: number) => {
@@ -94,6 +99,7 @@ export default async function CalendarPage() {
   const newCategories5StartDate = weekDate(NEW_CATEGORIES_5_START_WEEK);
   const newCategories6StartDate = weekDate(NEW_CATEGORIES_6_START_WEEK);
   const journeyStartDate = weekDate(JOURNEY_START_WEEK);
+  const categories7StartDate = weekDate(CATEGORIES_7_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -156,7 +162,8 @@ export default async function CalendarPage() {
               newCategories5BatchSeeded,
               newCategories6BatchSeeded,
               journeyBatchSeeded,
-            ].filter(Boolean).length} of 11 imported
+              categories7BatchSeeded,
+            ].filter(Boolean).length} of 12 imported
           </span>
         </summary>
         <div className="px-5 pb-5 space-y-5">
@@ -418,6 +425,29 @@ export default async function CalendarPage() {
           <form action={seedJourneyBatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import journey gap-fill batch ({JOURNEY_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          Equal-division top-up, Phase 7: {CATEGORIES_7_BATCH.length} scripts across 14 categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Bringing 42 established sub-categories from 4 scripts each toward a shared, higher floor so the library
+          totals exactly 1000. This phase covers the first 14 categories at 10 more scripts each (4 &rarr; 14).
+          TOFU {CATEGORIES_7_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {CATEGORIES_7_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {CATEGORIES_7_BATCH.filter((s) => s.funnelStage === "bofu").length} &middot; scheduled weekly starting{" "}
+          {categories7StartDate}.
+        </p>
+        {categories7BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedCategories7BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import equal-division batch, Phase 7 ({CATEGORIES_7_BATCH.length} scripts)
             </button>
           </form>
         )}
