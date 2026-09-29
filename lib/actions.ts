@@ -16,6 +16,7 @@ import { NEW_CATEGORIES_6_START_WEEK, NEW_CATEGORIES_6_BATCH_TAG, NEW_CATEGORIES
 import { JOURNEY_START_WEEK, JOURNEY_BATCH_TAG, JOURNEY_BATCH } from "./seed-data/journeyBatch";
 import { CATEGORIES_7_START_WEEK, CATEGORIES_7_BATCH_TAG, CATEGORIES_7_BATCH } from "./seed-data/categoriesBatch7";
 import { CATEGORIES_8_START_WEEK, CATEGORIES_8_BATCH_TAG, CATEGORIES_8_BATCH } from "./seed-data/categoriesBatch8";
+import { CATEGORIES_9_START_WEEK, CATEGORIES_9_BATCH_TAG, CATEGORIES_9_BATCH } from "./seed-data/categoriesBatch9";
 
 function val(fd: FormData, key: string, fallback = "") {
   const v = fd.get(key);
@@ -731,6 +732,7 @@ export async function backfillScriptMetadataAction() {
     ...JOURNEY_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.topicTag, segment: "" })),
     ...CATEGORIES_7_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.topicTag, segment: "" })),
     ...CATEGORIES_8_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.topicTag, segment: "" })),
+    ...CATEGORIES_9_BATCH.map((s) => ({ title: s.title, effort: s.effort, topic_tag: s.topicTag, segment: "" })),
   ];
 
   if (rows.length > 0) {
@@ -1742,4 +1744,114 @@ export async function seedCategories8Batch() {
 
 export async function seedCategories8BatchAction() {
   await seedCategories8Batch();
+}
+
+// ---------- Equal-division top-up, Phase 9, final phase (126 scripts, continuing from CATEGORIES_9_START_WEEK) ----------
+export async function isCategories9BatchSeeded(): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_9_BATCH_TAG}`;
+  return rows.length > 0;
+}
+
+export async function seedCategories9Batch() {
+  await ensureSchema();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_9_BATCH_TAG}`;
+  if (already.length > 0) {
+    revalidatePath("/calendar");
+    return { alreadySeeded: true as const, count: 0 };
+  }
+
+  const calendarRows = CATEGORIES_9_BATCH.map((s) => ({
+    date: addDays(BASE_DATE, (CATEGORIES_9_START_WEEK + s.weekOffset) * 7),
+    pillar: s.pillar,
+    concept_bucket: s.conceptBucket,
+    content_type: s.contentType,
+    topic: s.title,
+    angle: s.angle,
+    format: s.format,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "scripted",
+    notes: `Equal-division top-up (Phase 9, final) -- topic: ${s.topicTag} -- effort: ${s.effort}. Full script in Script Studio.`,
+    effort: s.effort,
+    topic_tag: s.topicTag,
+    segment: "",
+  }));
+
+  const scriptRows = CATEGORIES_9_BATCH.map((s) => ({
+    title: s.title,
+    pillar: s.pillar,
+    content_type: s.contentType,
+    angle_or_story_type: s.angle,
+    format: s.format,
+    body_black: s.bodyBlack,
+    body_red: s.bodyRed,
+    body_green: s.bodyGreen,
+    cta_type: s.ctaType,
+    funnel_stage: s.funnelStage,
+    status: "draft",
+    series_name: s.seriesName ?? "",
+    effort: s.effort,
+    topic_tag: s.topicTag,
+    segment: "",
+  }));
+
+  await sql`
+    INSERT INTO calendar_items ${sql(
+      calendarRows,
+      "date",
+      "pillar",
+      "concept_bucket",
+      "content_type",
+      "topic",
+      "angle",
+      "format",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "notes",
+      "effort",
+      "topic_tag",
+      "segment"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO scripts ${sql(
+      scriptRows,
+      "title",
+      "pillar",
+      "content_type",
+      "angle_or_story_type",
+      "format",
+      "body_black",
+      "body_red",
+      "body_green",
+      "cta_type",
+      "funnel_stage",
+      "status",
+      "series_name",
+      "effort",
+      "topic_tag",
+      "segment"
+    )}
+  `;
+
+  await sql`
+    INSERT INTO brand_config (key, value) VALUES (${CATEGORIES_9_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_9_BATCH.length })})
+    ON CONFLICT (key) DO NOTHING
+  `;
+
+  revalidatePath("/calendar");
+  revalidatePath("/scripts");
+  revalidatePath("/production");
+  revalidatePath("/funnel");
+  revalidatePath("/library");
+  revalidatePath("/");
+
+  return { alreadySeeded: false as const, count: CATEGORIES_9_BATCH.length };
+}
+
+export async function seedCategories9BatchAction() {
+  await seedCategories9Batch();
 }
