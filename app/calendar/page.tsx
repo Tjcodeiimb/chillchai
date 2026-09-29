@@ -24,6 +24,8 @@ import {
   isNewCategories5BatchSeeded,
   seedNewCategories6BatchAction,
   isNewCategories6BatchSeeded,
+  seedJourneyBatchAction,
+  isJourneyBatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
@@ -35,6 +37,7 @@ import { NEW_CATEGORIES_3_BATCH, NEW_CATEGORIES_3_START_WEEK } from "@/lib/seed-
 import { NEW_CATEGORIES_4_BATCH, NEW_CATEGORIES_4_START_WEEK } from "@/lib/seed-data/newCategoriesBatch4";
 import { NEW_CATEGORIES_5_BATCH, NEW_CATEGORIES_5_START_WEEK } from "@/lib/seed-data/newCategoriesBatch5";
 import { NEW_CATEGORIES_6_BATCH, NEW_CATEGORIES_6_START_WEEK } from "@/lib/seed-data/newCategoriesBatch6";
+import { JOURNEY_BATCH, JOURNEY_START_WEEK } from "@/lib/seed-data/journeyBatch";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 import CalendarClient, { type CalendarItem, type PickerScript, ResetCalendarButton } from "./CalendarClient";
@@ -58,6 +61,7 @@ export default async function CalendarPage() {
     newCategories4BatchSeeded,
     newCategories5BatchSeeded,
     newCategories6BatchSeeded,
+    journeyBatchSeeded,
   ] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
@@ -72,6 +76,7 @@ export default async function CalendarPage() {
     isNewCategories4BatchSeeded(),
     isNewCategories5BatchSeeded(),
     isNewCategories6BatchSeeded(),
+    isJourneyBatchSeeded(),
   ]);
 
   const weekDate = (weekOffset: number) => {
@@ -88,6 +93,7 @@ export default async function CalendarPage() {
   const newCategories4StartDate = weekDate(NEW_CATEGORIES_4_START_WEEK);
   const newCategories5StartDate = weekDate(NEW_CATEGORIES_5_START_WEEK);
   const newCategories6StartDate = weekDate(NEW_CATEGORIES_6_START_WEEK);
+  const journeyStartDate = weekDate(JOURNEY_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -149,7 +155,8 @@ export default async function CalendarPage() {
               newCategories4BatchSeeded,
               newCategories5BatchSeeded,
               newCategories6BatchSeeded,
-            ].filter(Boolean).length} of 10 imported
+              journeyBatchSeeded,
+            ].filter(Boolean).length} of 11 imported
           </span>
         </summary>
         <div className="px-5 pb-5 space-y-5">
@@ -387,6 +394,30 @@ export default async function CalendarPage() {
           <form action={seedNewCategories6BatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import new categories batch, Phase 6 ({NEW_CATEGORIES_6_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          Journey/storytelling gap-fill batch: {JOURNEY_BATCH.length} scripts across all 7 story types
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          The journey pillar had only 5 scripts total out of 563 (vs 558 in authority), with 4 of 7 story types at
+          zero. This batch covers My Story, Win Story, Loss Story, Lesson Story, Transformation Story, Challenge
+          Story, and Big Goal / Dream Journey -- 5-7 scripts each, bringing journey to a comparable floor with every
+          other topic. TOFU {JOURNEY_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {JOURNEY_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {JOURNEY_BATCH.filter((s) => s.funnelStage === "bofu").length} · scheduled weekly starting{" "}
+          {journeyStartDate}, continuing right after Phase 6.
+        </p>
+        {journeyBatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedJourneyBatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import journey gap-fill batch ({JOURNEY_BATCH.length} scripts)
             </button>
           </form>
         )}
