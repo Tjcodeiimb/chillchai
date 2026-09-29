@@ -66,6 +66,8 @@ async function initSchema() {
     ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS effort TEXT NOT NULL DEFAULT 'default';
     ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS topic_tag TEXT NOT NULL DEFAULT '';
     ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT '';
+    ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS script_id INTEGER;
+    CREATE INDEX IF NOT EXISTS calendar_items_date_idx ON calendar_items (date);
 
     CREATE TABLE IF NOT EXISTS outlier_research (
       id SERIAL PRIMARY KEY,

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card, Badge } from "../components/ui";
+import { scheduleScriptToCalendar } from "@/lib/actions";
 import type { LibraryScript } from "./page";
 
 function uniqueSorted(values: string[]) {
@@ -145,6 +146,19 @@ export default function LibraryClient({ scripts }: { scripts: LibraryScript[] })
                   <p className="whitespace-pre-line">{s.body_red}</p>
                   <p className="text-foreground/70">GREEN (editing):</p>
                   <p className="whitespace-pre-line">{s.body_green}</p>
+                  <form action={scheduleScriptToCalendar} className="flex items-center gap-2 pt-2">
+                    <input type="hidden" name="script_id" value={s.id} />
+                    <label className="text-foreground/70">Add to calendar:</label>
+                    <input
+                      required
+                      type="date"
+                      name="date"
+                      className="rounded-lg border border-border/15 bg-foreground/95 text-background text-xs p-1.5"
+                    />
+                    <button className="text-xs rounded-full bg-accent text-accent-deep font-medium px-3 py-1.5">
+                      Add
+                    </button>
+                  </form>
                 </div>
               )}
             </div>

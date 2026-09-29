@@ -37,7 +37,7 @@ import { NEW_CATEGORIES_5_BATCH, NEW_CATEGORIES_5_START_WEEK } from "@/lib/seed-
 import { NEW_CATEGORIES_6_BATCH, NEW_CATEGORIES_6_START_WEEK } from "@/lib/seed-data/newCategoriesBatch6";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
-import CalendarClient, { type CalendarItem } from "./CalendarClient";
+import CalendarClient, { type CalendarItem, type PickerScript, ResetCalendarButton } from "./CalendarClient";
 
 const FULL_OCT_BATCH = [...OCT_2026_BATCH, ...OCT_2026_BATCH_EXT];
 
@@ -47,6 +47,7 @@ export default async function CalendarPage() {
   const [
     brand,
     items,
+    scripts,
     octBatchSeeded,
     growthBatchSeeded,
     commentaryBatchSeeded,
@@ -60,6 +61,7 @@ export default async function CalendarPage() {
   ] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
+    sql<PickerScript[]>`SELECT id, title, funnel_stage, topic_tag, effort FROM scripts ORDER BY title ASC`,
     isOctoberBatchSeeded(),
     isGrowthBatchSeeded(),
     isCommentaryBatchSeeded(),
@@ -505,7 +507,7 @@ export default async function CalendarPage() {
       </details>
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading text-xl">Your planned batch</h3>
+        <h3 className="font-heading text-xl">Your calendar</h3>
         <a
           href="/api/export/calendar"
           className="text-xs rounded-full border border-border/20 px-3 py-1.5 hover:bg-foreground/5"
@@ -514,13 +516,20 @@ export default async function CalendarPage() {
         </a>
       </div>
 
-      {items.length === 0 ? (
-        <Card>
-          <p className="text-sm text-muted">Nothing planned yet — add your first item above, or import a content batch.</p>
-        </Card>
-      ) : (
-        <CalendarClient items={items} />
-      )}
+      <CalendarClient items={items} scripts={scripts} />
+
+      <details className="mt-8 rounded-2xl border border-red-400/20 bg-card/40">
+        <summary className="cursor-pointer select-none px-5 py-4 font-heading text-lg text-red-400/80">
+          Danger zone: reset calendar
+        </summary>
+        <div className="px-5 pb-5">
+          <p className="text-xs text-muted mb-3">
+            Clears every scheduled date from the calendar above. Your {scripts.length} scripts in the Script Library
+            are never touched -- you can re-schedule any of them onto new dates right after.
+          </p>
+          <ResetCalendarButton itemCount={items.length} />
+        </div>
+      </details>
     </div>
   );
 }

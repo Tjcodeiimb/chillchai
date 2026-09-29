@@ -26,6 +26,7 @@ const inputClass = selectClass;
 
 export default function ImproveClient({ brand, scripts }: { brand: BrandConfig; scripts: ExistingScript[] }) {
   const [selectedId, setSelectedId] = useState<string>("");
+  const [scriptSearch, setScriptSearch] = useState("");
   const [pillar, setPillar] = useState("authority");
   const [contentType, setContentType] = useState("educational");
   const [angle, setAngle] = useState("");
@@ -38,6 +39,12 @@ export default function ImproveClient({ brand, scripts }: { brand: BrandConfig; 
   const [focusNotes, setFocusNotes] = useState("");
 
   const angleOptions = pillar === "journey" ? STORY_TYPES : SCRIPT_ANGLES;
+
+  const filteredScripts = useMemo(() => {
+    const q = scriptSearch.trim().toLowerCase();
+    if (!q) return scripts;
+    return scripts.filter((s) => s.title.toLowerCase().includes(q));
+  }, [scripts, scriptSearch]);
 
   function loadFromLibrary(id: string) {
     setSelectedId(id);
@@ -75,14 +82,23 @@ export default function ImproveClient({ brand, scripts }: { brand: BrandConfig; 
       <Card>
         <h3 className="font-heading text-xl mb-3">1. Bring in a script</h3>
         <label className="text-xs text-muted block mb-1">Pull from your Script Library (optional)</label>
-        <select value={selectedId} onChange={(e) => loadFromLibrary(e.target.value)} className={`${selectClass} mb-4`}>
+        <input
+          value={scriptSearch}
+          onChange={(e) => setScriptSearch(e.target.value)}
+          placeholder="Search by script name..."
+          className={`${inputClass} mb-2`}
+        />
+        <select value={selectedId} onChange={(e) => loadFromLibrary(e.target.value)} className={`${selectClass} mb-1`}>
           <option value="">-- paste your own below instead --</option>
-          {scripts.map((s) => (
+          {filteredScripts.map((s) => (
             <option key={s.id} value={s.id}>
               {s.title}
             </option>
           ))}
         </select>
+        <p className="text-xs text-muted mb-4">
+          {filteredScripts.length} of {scripts.length} scripts{scriptSearch ? " match your search" : ""}
+        </p>
 
         <label className="text-xs text-muted block mb-1">BLACK (spoken dialogue) -- required</label>
         <textarea

@@ -62,6 +62,61 @@ export async function deleteCalendarItem(fd: FormData) {
   revalidatePath("/funnel");
 }
 
+// Schedules an existing script onto a calendar date, used by both the
+// Calendar page's day picker and the Script Library's "Add to calendar"
+// button. Denormalizes the script's fields onto the calendar_items row (as
+// every other batch import does) while keeping a real script_id link back,
+// so the calendar entry stays accurate even as the script list grows.
+export async function scheduleScriptToCalendar(fd: FormData) {
+  await ensureSchema();
+  const scriptId = num(fd, "script_id");
+  const date = val(fd, "date");
+  if (!scriptId || !date) return;
+
+  const rows = await sql<
+    {
+      title: string;
+      pillar: string;
+      content_type: string;
+      angle_or_story_type: string;
+      format: string;
+      cta_type: string;
+      funnel_stage: string;
+      effort: string;
+      topic_tag: string;
+      segment: string;
+    }[]
+  >`SELECT title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage, effort, topic_tag, segment FROM scripts WHERE id = ${scriptId}`;
+  const script = rows[0];
+  if (!script) return;
+
+  await sql`
+    INSERT INTO calendar_items (
+      date, pillar, concept_bucket, content_type, topic, angle, format, cta_type, funnel_stage,
+      status, notes, effort, topic_tag, segment, script_id
+    ) VALUES (
+      ${date}, ${script.pillar}, 'proven', ${script.content_type}, ${script.title}, ${script.angle_or_story_type},
+      ${script.format}, ${script.cta_type}, ${script.funnel_stage}, 'scheduled', '', ${script.effort},
+      ${script.topic_tag}, ${script.segment}, ${scriptId}
+    )
+  `;
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  revalidatePath("/funnel");
+  revalidatePath("/library");
+}
+
+// Clears every scheduled date while leaving all scripts in the Script
+// Library untouched -- lets the calendar restart clean without losing any
+// written content.
+export async function resetCalendarAction() {
+  await ensureSchema();
+  await sql`DELETE FROM calendar_items`;
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  revalidatePath("/funnel");
+}
+
 // ---------- Outlier research ----------
 export async function createOutlier(fd: FormData) {
   await ensureSchema();
