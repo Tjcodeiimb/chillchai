@@ -28,6 +28,8 @@ import {
   isJourneyBatchSeeded,
   seedCategories7BatchAction,
   isCategories7BatchSeeded,
+  seedCategories8BatchAction,
+  isCategories8BatchSeeded,
 } from "@/lib/actions";
 import { BASE_DATE, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "@/lib/seed-data/octBatch";
 import { GROWTH_BATCH, GROWTH_START_WEEK } from "@/lib/seed-data/growthBatch";
@@ -41,6 +43,7 @@ import { NEW_CATEGORIES_5_BATCH, NEW_CATEGORIES_5_START_WEEK } from "@/lib/seed-
 import { NEW_CATEGORIES_6_BATCH, NEW_CATEGORIES_6_START_WEEK } from "@/lib/seed-data/newCategoriesBatch6";
 import { JOURNEY_BATCH, JOURNEY_START_WEEK } from "@/lib/seed-data/journeyBatch";
 import { CATEGORIES_7_BATCH, CATEGORIES_7_START_WEEK } from "@/lib/seed-data/categoriesBatch7";
+import { CATEGORIES_8_BATCH, CATEGORIES_8_START_WEEK } from "@/lib/seed-data/categoriesBatch8";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
 import CalendarClient, { type CalendarItem, type PickerScript, ResetCalendarButton } from "./CalendarClient";
@@ -66,6 +69,7 @@ export default async function CalendarPage() {
     newCategories6BatchSeeded,
     journeyBatchSeeded,
     categories7BatchSeeded,
+    categories8BatchSeeded,
   ] = await Promise.all([
     getBrand(),
     sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
@@ -82,6 +86,7 @@ export default async function CalendarPage() {
     isNewCategories6BatchSeeded(),
     isJourneyBatchSeeded(),
     isCategories7BatchSeeded(),
+    isCategories8BatchSeeded(),
   ]);
 
   const weekDate = (weekOffset: number) => {
@@ -100,6 +105,7 @@ export default async function CalendarPage() {
   const newCategories6StartDate = weekDate(NEW_CATEGORIES_6_START_WEEK);
   const journeyStartDate = weekDate(JOURNEY_START_WEEK);
   const categories7StartDate = weekDate(CATEGORIES_7_START_WEEK);
+  const categories8StartDate = weekDate(CATEGORIES_8_START_WEEK);
 
   const total = items.length;
   const byPillar = (p: string) => items.filter((i) => i.pillar === p).length;
@@ -163,7 +169,8 @@ export default async function CalendarPage() {
               newCategories6BatchSeeded,
               journeyBatchSeeded,
               categories7BatchSeeded,
-            ].filter(Boolean).length} of 12 imported
+              categories8BatchSeeded,
+            ].filter(Boolean).length} of 13 imported
           </span>
         </summary>
         <div className="px-5 pb-5 space-y-5">
@@ -448,6 +455,29 @@ export default async function CalendarPage() {
           <form action={seedCategories7BatchAction}>
             <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
               Import equal-division batch, Phase 7 ({CATEGORIES_7_BATCH.length} scripts)
+            </button>
+          </form>
+        )}
+      </Card>
+
+      <Card className="mb-0">
+        <h3 className="font-heading text-xl mb-2">
+          Equal-division top-up, Phase 8: {CATEGORIES_8_BATCH.length} scripts across 14 categories
+        </h3>
+        <p className="text-xs text-muted mb-3">
+          Continuing toward exactly 1000 scripts. This phase covers 14 more categories: 4 at 10 more scripts each
+          (4 &rarr; 14) and 10 at 9 more scripts each (4 &rarr; 13). TOFU{" "}
+          {CATEGORIES_8_BATCH.filter((s) => s.funnelStage === "tofu").length} / MOFU{" "}
+          {CATEGORIES_8_BATCH.filter((s) => s.funnelStage === "mofu").length} / BOFU{" "}
+          {CATEGORIES_8_BATCH.filter((s) => s.funnelStage === "bofu").length} &middot; scheduled weekly starting{" "}
+          {categories8StartDate}.
+        </p>
+        {categories8BatchSeeded ? (
+          <Badge tone="accent">Imported -- see the batch below and in Script Studio</Badge>
+        ) : (
+          <form action={seedCategories8BatchAction}>
+            <button className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2">
+              Import equal-division batch, Phase 8 ({CATEGORIES_8_BATCH.length} scripts)
             </button>
           </form>
         )}
