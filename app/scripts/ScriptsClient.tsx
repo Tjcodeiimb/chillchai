@@ -19,6 +19,7 @@ import {
 import { createScript, createScriptTemplate, deleteScript, deleteScriptTemplate } from "@/lib/actions";
 import { Card, Badge, SubTabs, DeleteForm } from "../components/ui";
 import PromptRunner from "../components/PromptRunner";
+import BulkImportClient from "../components/BulkImportClient";
 
 type ScriptRow = {
   id: number;
@@ -407,6 +408,11 @@ function BankTab({ scripts, templates }: { scripts: ScriptRow[]; templates: Temp
 
   return (
     <div className="space-y-6">
+      <Card>
+        <h3 className="font-heading text-xl mb-3">Bulk import scripts (auto-classified via API)</h3>
+        <BulkImportClient />
+      </Card>
+
       <Card>
         <h3 className="font-heading text-xl mb-3">Write a script manually (color-coded)</h3>
         <form action={createScript} className="grid md:grid-cols-2 gap-3">

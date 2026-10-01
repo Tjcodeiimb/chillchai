@@ -15,8 +15,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Upforge Content OS",
-  description: "Shardul's Instagram content operating system: calendar, hooks, scripts, research, and prompts, all in one place.",
+  title: "Upcreate",
+  description: "The Instagram/short-form content operating system: calendar, hooks, scripts, research, and prompts, all in one place.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

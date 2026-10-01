@@ -2,6 +2,7 @@ import { sql } from "@/lib/db";
 import { backfillScriptMetadataAction, isBackfillDone } from "@/lib/actions";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import LibraryClient from "./LibraryClient";
+import BulkImportClient from "../components/BulkImportClient";
 
 // Metadata only -- body_black/body_red/body_green are fetched lazily per
 // script on expand (see /api/scripts/[id]/body) instead of being shipped
@@ -42,6 +43,13 @@ export default async function LibraryPage() {
         title="Script Library"
         description="Every script from every batch, in one place -- filter by funnel stage, detail level, topic, and format."
       />
+
+      <details className="mb-6 rounded-2xl border border-border/15 bg-card/40">
+        <summary className="cursor-pointer select-none px-5 py-4 font-heading text-lg">Bulk import scripts</summary>
+        <div className="px-5 pb-5">
+          <BulkImportClient />
+        </div>
+      </details>
 
       {!backfillDone && (
         <Card className="mb-6">

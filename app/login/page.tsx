@@ -1,5 +1,6 @@
 import { isAuthConfigured } from "@/lib/auth";
 import { loginAction } from "@/lib/auth-actions";
+import Logo from "../components/Logo";
 
 export default async function LoginPage({
   searchParams,
@@ -12,7 +13,10 @@ export default async function LoginPage({
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-sm rounded-2xl border border-border/15 bg-card/60 p-8">
-        <div className="font-heading text-3xl mb-1">Upforge</div>
+        <div className="flex items-center gap-3 mb-1">
+          <Logo size={30} />
+          <div className="font-heading text-3xl">Upcreate</div>
+        </div>
         <p className="text-sm text-muted mb-6">content os</p>
 
         {!configured ? (

@@ -130,6 +130,15 @@ async function initSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    CREATE TABLE IF NOT EXISTS ai_settings (
+      id SERIAL PRIMARY KEY,
+      provider TEXT NOT NULL DEFAULT 'gemini',
+      api_key TEXT NOT NULL DEFAULT '',
+      model TEXT NOT NULL DEFAULT '',
+      custom_endpoint TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
     CREATE TABLE IF NOT EXISTS own_posts (
       id SERIAL PRIMARY KEY,
       title TEXT DEFAULT '',

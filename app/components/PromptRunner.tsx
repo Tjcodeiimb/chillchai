@@ -81,19 +81,23 @@ export default function PromptRunner({
           disabled={loading}
           className="rounded-full bg-accent text-accent-deep text-sm font-medium px-4 py-2 disabled:opacity-60"
         >
-          {loading ? "Generating…" : `${label} with Gemini`}
+          {loading ? "Generating…" : label}
         </button>
-        <span className="text-xs text-muted">or paste the prompt above into Gemini / Claude / ChatGPT yourself</span>
+        <span className="text-xs text-muted">or paste the prompt above into your AI tool of choice yourself</span>
       </div>
 
       {status === "no_key" && (
         <p className="text-xs text-[#e0a458] mt-2">
-          No GEMINI_API_KEY set in .env.local — copy the prompt above and paste it into Gemini instead.
+          No AI provider connected yet —{" "}
+          <a href="/settings" className="underline">
+            add an API key in Settings
+          </a>
+          , or copy the prompt above and paste it into your AI tool manually.
         </p>
       )}
       {status === "quota" && (
         <p className="text-xs text-[#e0a458] mt-2">
-          Gemini quota/rate limit hit — copy the prompt above and paste it into Gemini manually for now.
+          Provider quota/rate limit hit — copy the prompt above and run it manually for now.
         </p>
       )}
       {status === "error" && (
