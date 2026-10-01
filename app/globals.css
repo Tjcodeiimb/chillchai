@@ -40,3 +40,29 @@ h1, h2, h3, .font-heading {
 input, textarea, select {
   color: var(--background);
 }
+
+* {
+  scrollbar-color: var(--muted) transparent;
+}
+
+a, button {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 999px;
+  opacity: 0.5;
+}

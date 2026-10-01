@@ -1,6 +1,6 @@
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-border/15 bg-card/60 p-5 md:p-6 ${className}`}>
+    <div className={`rounded-2xl border border-border/15 bg-card/60 p-5 md:p-6 shadow-sm ${className}`}>
       {children}
     </div>
   );

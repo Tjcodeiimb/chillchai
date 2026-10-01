@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAuthConfigured, verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // No APP_PASSWORD configured -> app is open (local/dev default).
-  if (!isAuthConfigured()) return NextResponse.next();
-
-  if (pathname === "/login") return NextResponse.next();
+  if (pathname === "/login" || pathname === "/signup") return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!verifySessionToken(token)) {
+  if (verifySessionToken(token) === null) {
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }

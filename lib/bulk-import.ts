@@ -48,7 +48,7 @@ function firstLine(block: string) {
 // other script in the library carries -- pillar, content type, angle,
 // format, CTA, funnel stage, effort, topic -- so bulk-imported scripts show
 // up in the Library's filters exactly like hand-written ones do.
-export async function classifyScriptBlocks(blocks: string[]): Promise<ClassifiedScript[]> {
+export async function classifyScriptBlocks(userId: number, blocks: string[]): Promise<ClassifiedScript[]> {
   if (blocks.length === 0) return [];
 
   const angleNames = SCRIPT_ANGLES.map((a) => a.name);
@@ -71,7 +71,7 @@ Return ONLY a JSON array, one object per script, in the same order as the script
 
 ${blocks.map((b, i) => `--- SCRIPT ${i + 1} ---\n${b}`).join("\n\n")}`;
 
-  const result = await generateText(prompt);
+  const result = await generateText(userId, prompt);
 
   if (!result.ok) {
     // No AI connected, or the call failed -- fall back to sane defaults so

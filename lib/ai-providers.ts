@@ -31,11 +31,11 @@ export type AiSettings = {
 
 const EMPTY_SETTINGS: AiSettings = { provider: "gemini", apiKey: "", model: "", customEndpoint: "" };
 
-export async function getAiSettings(): Promise<AiSettings> {
+export async function getAiSettings(userId: number): Promise<AiSettings> {
   await ensureSchema();
   const rows = await sql<
     { provider: string; api_key: string; model: string; custom_endpoint: string }[]
-  >`SELECT provider, api_key, model, custom_endpoint FROM ai_settings ORDER BY id ASC LIMIT 1`;
+  >`SELECT provider, api_key, model, custom_endpoint FROM ai_settings WHERE user_id = ${userId} ORDER BY id ASC LIMIT 1`;
   if (rows.length === 0) return EMPTY_SETTINGS;
   const row = rows[0];
   const provider = (AI_PROVIDERS as readonly string[]).includes(row.provider)
@@ -46,14 +46,14 @@ export async function getAiSettings(): Promise<AiSettings> {
 
 // For display on the Settings page -- never send the real key back to the
 // browser, only whether one is set and its last 4 characters for recognition.
-export async function getMaskedAiSettings(): Promise<{
+export async function getMaskedAiSettings(userId: number): Promise<{
   provider: AiProvider;
   model: string;
   customEndpoint: string;
   hasKey: boolean;
   keyPreview: string;
 }> {
-  const settings = await getAiSettings();
+  const settings = await getAiSettings(userId);
   return {
     provider: settings.provider,
     model: settings.model,
@@ -63,9 +63,9 @@ export async function getMaskedAiSettings(): Promise<{
   };
 }
 
-export async function saveAiSettings(settings: AiSettings): Promise<void> {
+export async function saveAiSettings(userId: number, settings: AiSettings): Promise<void> {
   await ensureSchema();
-  const existing = await sql<{ id: number }[]>`SELECT id FROM ai_settings ORDER BY id ASC LIMIT 1`;
+  const existing = await sql<{ id: number }[]>`SELECT id FROM ai_settings WHERE user_id = ${userId} ORDER BY id ASC LIMIT 1`;
   if (existing.length > 0) {
     await sql`
       UPDATE ai_settings
@@ -75,15 +75,15 @@ export async function saveAiSettings(settings: AiSettings): Promise<void> {
     `;
   } else {
     await sql`
-      INSERT INTO ai_settings (provider, api_key, model, custom_endpoint)
-      VALUES (${settings.provider}, ${settings.apiKey}, ${settings.model}, ${settings.customEndpoint})
+      INSERT INTO ai_settings (provider, api_key, model, custom_endpoint, user_id)
+      VALUES (${settings.provider}, ${settings.apiKey}, ${settings.model}, ${settings.customEndpoint}, ${userId})
     `;
   }
 }
 
-export async function clearAiKey(): Promise<void> {
+export async function clearAiKey(userId: number): Promise<void> {
   await ensureSchema();
-  await sql`UPDATE ai_settings SET api_key = '', updated_at = now()`;
+  await sql`UPDATE ai_settings SET api_key = '', updated_at = now() WHERE user_id = ${userId}`;
 }
 
 export type GenerateResult =
@@ -93,8 +93,8 @@ export type GenerateResult =
 // Falls back to GEMINI_API_KEY from the environment when no settings row
 // (or an empty key) exists yet, so existing single-key deployments keep
 // working exactly as before without anyone touching Settings.
-async function resolveSettings(): Promise<AiSettings> {
-  const settings = await getAiSettings();
+async function resolveSettings(userId: number): Promise<AiSettings> {
+  const settings = await getAiSettings(userId);
   if (settings.apiKey) return settings;
   const envKey = process.env.GEMINI_API_KEY;
   if (envKey) {
@@ -103,8 +103,8 @@ async function resolveSettings(): Promise<AiSettings> {
   return settings;
 }
 
-export async function generateText(prompt: string): Promise<GenerateResult> {
-  const settings = await resolveSettings();
+export async function generateText(userId: number, prompt: string): Promise<GenerateResult> {
+  const settings = await resolveSettings(userId);
   if (!settings.apiKey) return { ok: false, error: "no_key" };
 
   try {

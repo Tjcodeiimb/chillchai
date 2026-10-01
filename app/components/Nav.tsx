@@ -33,7 +33,9 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
             href={s.href}
             onClick={onNavigate}
             className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-              active ? "bg-accent text-accent-deep font-medium" : "text-foreground/80 hover:bg-foreground/5"
+              active
+                ? "bg-accent text-accent-deep font-medium"
+                : "text-foreground/80 hover:bg-foreground/10 hover:text-foreground"
             }`}
           >
             <span className="text-[10px] text-muted tabular-nums">{s.num}</span>
@@ -49,7 +51,7 @@ export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/onboarding") return null;
 
   return (
     <>

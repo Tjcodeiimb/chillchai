@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { sql, ensureSchema } from "./db";
 import { updateBrand, BrandConfig } from "./brand";
+import { requireUserId } from "./auth";
 import { BASE_DATE, BATCH_TAG, OCT_2026_BATCH, OCT_2026_BATCH_EXT } from "./seed-data/octBatch";
 import { GROWTH_START_WEEK, GROWTH_BATCH_TAG, GROWTH_BATCH } from "./seed-data/growthBatch";
 import { COMMENTARY_START_WEEK, COMMENTARY_BATCH_TAG, COMMENTARY_BATCH } from "./seed-data/commentaryBatch";
@@ -33,7 +34,8 @@ function id(fd: FormData) {
 
 // ---------- Brand ----------
 export async function saveBrandAction(partial: Partial<BrandConfig>) {
-  await updateBrand(partial);
+  const userId = await requireUserId();
+  await updateBrand(userId, partial);
   revalidatePath("/brand");
   revalidatePath("/");
 }
@@ -41,9 +43,10 @@ export async function saveBrandAction(partial: Partial<BrandConfig>) {
 // ---------- Calendar ----------
 export async function createCalendarItem(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   await sql`
-    INSERT INTO calendar_items (date, pillar, concept_bucket, content_type, topic, angle, format, cta_type, funnel_stage, status, notes)
-    VALUES (${val(fd, "date")}, ${val(fd, "pillar", "authority")}, ${val(fd, "concept_bucket", "proven")}, ${val(fd, "content_type", "educational")}, ${val(fd, "topic")}, ${val(fd, "angle")}, ${val(fd, "format")}, ${val(fd, "cta_type", "follow")}, ${val(fd, "funnel_stage", "tofu")}, ${val(fd, "status", "idea")}, ${val(fd, "notes")})
+    INSERT INTO calendar_items (date, pillar, concept_bucket, content_type, topic, angle, format, cta_type, funnel_stage, status, notes, user_id)
+    VALUES (${val(fd, "date")}, ${val(fd, "pillar", "authority")}, ${val(fd, "concept_bucket", "proven")}, ${val(fd, "content_type", "educational")}, ${val(fd, "topic")}, ${val(fd, "angle")}, ${val(fd, "format")}, ${val(fd, "cta_type", "follow")}, ${val(fd, "funnel_stage", "tofu")}, ${val(fd, "status", "idea")}, ${val(fd, "notes")}, ${userId})
   `;
   revalidatePath("/calendar");
   revalidatePath("/");
@@ -52,7 +55,8 @@ export async function createCalendarItem(fd: FormData) {
 
 export async function updateCalendarItemStatus(fd: FormData) {
   await ensureSchema();
-  await sql`UPDATE calendar_items SET status = ${val(fd, "status", "idea")} WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`UPDATE calendar_items SET status = ${val(fd, "status", "idea")} WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/calendar");
   revalidatePath("/");
   revalidatePath("/funnel");
@@ -60,7 +64,8 @@ export async function updateCalendarItemStatus(fd: FormData) {
 
 export async function deleteCalendarItem(fd: FormData) {
   await ensureSchema();
-  await sql`DELETE FROM calendar_items WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM calendar_items WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/calendar");
   revalidatePath("/");
   revalidatePath("/funnel");
@@ -73,6 +78,7 @@ export async function deleteCalendarItem(fd: FormData) {
 // so the calendar entry stays accurate even as the script list grows.
 export async function scheduleScriptToCalendar(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   const scriptId = num(fd, "script_id");
   const date = val(fd, "date");
   if (!scriptId || !date) return;
@@ -90,18 +96,18 @@ export async function scheduleScriptToCalendar(fd: FormData) {
       topic_tag: string;
       segment: string;
     }[]
-  >`SELECT title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage, effort, topic_tag, segment FROM scripts WHERE id = ${scriptId}`;
+  >`SELECT title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage, effort, topic_tag, segment FROM scripts WHERE id = ${scriptId} AND user_id = ${userId}`;
   const script = rows[0];
   if (!script) return;
 
   await sql`
     INSERT INTO calendar_items (
       date, pillar, concept_bucket, content_type, topic, angle, format, cta_type, funnel_stage,
-      status, notes, effort, topic_tag, segment, script_id
+      status, notes, effort, topic_tag, segment, script_id, user_id
     ) VALUES (
       ${date}, ${script.pillar}, 'proven', ${script.content_type}, ${script.title}, ${script.angle_or_story_type},
       ${script.format}, ${script.cta_type}, ${script.funnel_stage}, 'scheduled', '', ${script.effort},
-      ${script.topic_tag}, ${script.segment}, ${scriptId}
+      ${script.topic_tag}, ${script.segment}, ${scriptId}, ${userId}
     )
   `;
   revalidatePath("/calendar");
@@ -115,7 +121,8 @@ export async function scheduleScriptToCalendar(fd: FormData) {
 // written content.
 export async function resetCalendarAction() {
   await ensureSchema();
-  await sql`DELETE FROM calendar_items`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM calendar_items WHERE user_id = ${userId}`;
   revalidatePath("/calendar");
   revalidatePath("/");
   revalidatePath("/funnel");
@@ -124,22 +131,25 @@ export async function resetCalendarAction() {
 // ---------- Outlier research ----------
 export async function createOutlier(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   await sql`
-    INSERT INTO outlier_research (source_type, creator_handle, link, niche_keyword, follower_count, views, hook_written, hook_verbal, hook_visual, angle, notes)
-    VALUES (${val(fd, "source_type", "keyword")}, ${val(fd, "creator_handle")}, ${val(fd, "link")}, ${val(fd, "niche_keyword")}, ${num(fd, "follower_count")}, ${num(fd, "views")}, ${val(fd, "hook_written")}, ${val(fd, "hook_verbal")}, ${val(fd, "hook_visual")}, ${val(fd, "angle")}, ${val(fd, "notes")})
+    INSERT INTO outlier_research (source_type, creator_handle, link, niche_keyword, follower_count, views, hook_written, hook_verbal, hook_visual, angle, notes, user_id)
+    VALUES (${val(fd, "source_type", "keyword")}, ${val(fd, "creator_handle")}, ${val(fd, "link")}, ${val(fd, "niche_keyword")}, ${num(fd, "follower_count")}, ${num(fd, "views")}, ${val(fd, "hook_written")}, ${val(fd, "hook_verbal")}, ${val(fd, "hook_visual")}, ${val(fd, "angle")}, ${val(fd, "notes")}, ${userId})
   `;
   revalidatePath("/research");
 }
 
 export async function toggleOutlierUsed(fd: FormData) {
   await ensureSchema();
-  await sql`UPDATE outlier_research SET used = NOT used WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`UPDATE outlier_research SET used = NOT used WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/research");
 }
 
 export async function deleteOutlier(fd: FormData) {
   await ensureSchema();
-  await sql`DELETE FROM outlier_research WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM outlier_research WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/research");
 }
 
@@ -160,9 +170,11 @@ export type BulkOutlierRow = {
 export async function createOutliersBulk(rows: BulkOutlierRow[]) {
   if (rows.length === 0) return;
   await ensureSchema();
+  const userId = await requireUserId();
+  const rowsWithUser = rows.map((r) => ({ ...r, user_id: userId }));
   await sql`
     INSERT INTO outlier_research ${sql(
-      rows,
+      rowsWithUser,
       "source_type",
       "creator_handle",
       "link",
@@ -173,7 +185,8 @@ export async function createOutliersBulk(rows: BulkOutlierRow[]) {
       "hook_verbal",
       "hook_visual",
       "angle",
-      "notes"
+      "notes",
+      "user_id"
     )}
   `;
   revalidatePath("/research");
@@ -182,25 +195,28 @@ export async function createOutliersBulk(rows: BulkOutlierRow[]) {
 // ---------- Hook stacks ----------
 export async function createHookStack(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   await sql`
-    INSERT INTO hook_stacks (written, verbal, visual, angle, topic)
-    VALUES (${val(fd, "written")}, ${val(fd, "verbal")}, ${val(fd, "visual")}, ${val(fd, "angle")}, ${val(fd, "topic")})
+    INSERT INTO hook_stacks (written, verbal, visual, angle, topic, user_id)
+    VALUES (${val(fd, "written")}, ${val(fd, "verbal")}, ${val(fd, "visual")}, ${val(fd, "angle")}, ${val(fd, "topic")}, ${userId})
   `;
   revalidatePath("/hooks");
 }
 
 export async function deleteHookStack(fd: FormData) {
   await ensureSchema();
-  await sql`DELETE FROM hook_stacks WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM hook_stacks WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/hooks");
 }
 
 // ---------- Scripts ----------
 export async function createScript(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   await sql`
-    INSERT INTO scripts (title, pillar, content_type, angle_or_story_type, format, body_black, body_red, body_green, cta_type, funnel_stage, status, series_name)
-    VALUES (${val(fd, "title", "Untitled script")}, ${val(fd, "pillar", "authority")}, ${val(fd, "content_type", "educational")}, ${val(fd, "angle_or_story_type")}, ${val(fd, "format")}, ${val(fd, "body_black")}, ${val(fd, "body_red")}, ${val(fd, "body_green")}, ${val(fd, "cta_type", "follow")}, ${val(fd, "funnel_stage", "tofu")}, ${val(fd, "status", "draft")}, ${val(fd, "series_name")})
+    INSERT INTO scripts (title, pillar, content_type, angle_or_story_type, format, body_black, body_red, body_green, cta_type, funnel_stage, status, series_name, user_id)
+    VALUES (${val(fd, "title", "Untitled script")}, ${val(fd, "pillar", "authority")}, ${val(fd, "content_type", "educational")}, ${val(fd, "angle_or_story_type")}, ${val(fd, "format")}, ${val(fd, "body_black")}, ${val(fd, "body_red")}, ${val(fd, "body_green")}, ${val(fd, "cta_type", "follow")}, ${val(fd, "funnel_stage", "tofu")}, ${val(fd, "status", "draft")}, ${val(fd, "series_name")}, ${userId})
   `;
   revalidatePath("/scripts");
   revalidatePath("/production");
@@ -208,32 +224,36 @@ export async function createScript(fd: FormData) {
 
 export async function deleteScript(fd: FormData) {
   await ensureSchema();
-  await sql`DELETE FROM scripts WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM scripts WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/scripts");
   revalidatePath("/production");
 }
 
 export async function createScriptTemplate(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   await sql`
-    INSERT INTO script_templates (name, pillar, angle, source_note, template_text)
-    VALUES (${val(fd, "name", "Untitled template")}, ${val(fd, "pillar", "authority")}, ${val(fd, "angle")}, ${val(fd, "source_note")}, ${val(fd, "template_text")})
+    INSERT INTO script_templates (name, pillar, angle, source_note, template_text, user_id)
+    VALUES (${val(fd, "name", "Untitled template")}, ${val(fd, "pillar", "authority")}, ${val(fd, "angle")}, ${val(fd, "source_note")}, ${val(fd, "template_text")}, ${userId})
   `;
   revalidatePath("/scripts");
 }
 
 export async function deleteScriptTemplate(fd: FormData) {
   await ensureSchema();
-  await sql`DELETE FROM script_templates WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM script_templates WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/scripts");
 }
 
 // ---------- Own posts / analytics ----------
 export async function createOwnPost(fd: FormData) {
   await ensureSchema();
+  const userId = await requireUserId();
   await sql`
-    INSERT INTO own_posts (title, posted_date, views, followers_at_post, pillar, notes)
-    VALUES (${val(fd, "title")}, ${val(fd, "posted_date")}, ${num(fd, "views")}, ${num(fd, "followers_at_post")}, ${val(fd, "pillar", "authority")}, ${val(fd, "notes")})
+    INSERT INTO own_posts (title, posted_date, views, followers_at_post, pillar, notes, user_id)
+    VALUES (${val(fd, "title")}, ${val(fd, "posted_date")}, ${num(fd, "views")}, ${num(fd, "followers_at_post")}, ${val(fd, "pillar", "authority")}, ${val(fd, "notes")}, ${userId})
   `;
   revalidatePath("/analytics");
   revalidatePath("/");
@@ -241,7 +261,8 @@ export async function createOwnPost(fd: FormData) {
 
 export async function deleteOwnPost(fd: FormData) {
   await ensureSchema();
-  await sql`DELETE FROM own_posts WHERE id = ${id(fd)}`;
+  const userId = await requireUserId();
+  await sql`DELETE FROM own_posts WHERE id = ${id(fd)} AND user_id = ${userId}`;
   revalidatePath("/analytics");
   revalidatePath("/");
 }
@@ -255,13 +276,15 @@ function addDays(dateStr: string, days: number) {
 
 export async function isOctoberBatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedOctoberBatch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -284,6 +307,7 @@ export async function seedOctoberBatch() {
     effort: s.effort,
     topic_tag: "Market Entry & Business Consulting",
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = fullBatch.map((s) => ({
@@ -302,6 +326,7 @@ export async function seedOctoberBatch() {
     effort: s.effort,
     topic_tag: "Market Entry & Business Consulting",
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -320,7 +345,8 @@ export async function seedOctoberBatch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -341,13 +367,14 @@ export async function seedOctoberBatch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: fullBatch.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: fullBatch.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -366,13 +393,15 @@ export async function seedOctoberBatchAction() {
 // ---------- Growth batch (100 scripts, weekly, continuing from GROWTH_START_WEEK) ----------
 export async function isGrowthBatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${GROWTH_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${GROWTH_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedGrowthBatch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${GROWTH_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${GROWTH_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -393,6 +422,7 @@ export async function seedGrowthBatch() {
     effort: s.effort,
     topic_tag: s.subniche,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = GROWTH_BATCH.map((s) => ({
@@ -411,6 +441,7 @@ export async function seedGrowthBatch() {
     effort: s.effort,
     topic_tag: s.subniche,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -429,7 +460,8 @@ export async function seedGrowthBatch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -450,13 +482,14 @@ export async function seedGrowthBatch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${GROWTH_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: GROWTH_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${GROWTH_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: GROWTH_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -475,13 +508,15 @@ export async function seedGrowthBatchAction() {
 // ---------- Commentary batch (50 scripts, weekly, continuing from COMMENTARY_START_WEEK) ----------
 export async function isCommentaryBatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${COMMENTARY_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${COMMENTARY_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedCommentaryBatch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${COMMENTARY_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${COMMENTARY_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -502,6 +537,7 @@ export async function seedCommentaryBatch() {
     effort: s.effort,
     topic_tag: "",
     segment: s.sourceType,
+    user_id: userId,
   }));
 
   const scriptRows = COMMENTARY_BATCH.map((s) => ({
@@ -520,6 +556,7 @@ export async function seedCommentaryBatch() {
     effort: s.effort,
     topic_tag: "",
     segment: s.sourceType,
+    user_id: userId,
   }));
 
   await sql`
@@ -538,7 +575,8 @@ export async function seedCommentaryBatch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -559,13 +597,14 @@ export async function seedCommentaryBatch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${COMMENTARY_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: COMMENTARY_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${COMMENTARY_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: COMMENTARY_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -584,13 +623,15 @@ export async function seedCommentaryBatchAction() {
 // ---------- Segments batch (200 scripts, weekly, continuing from SEGMENTS_START_WEEK) ----------
 export async function isSegmentsBatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${SEGMENTS_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${SEGMENTS_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedSegmentsBatch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${SEGMENTS_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${SEGMENTS_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -611,6 +652,7 @@ export async function seedSegmentsBatch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: s.segment,
+    user_id: userId,
   }));
 
   const scriptRows = SEGMENTS_BATCH.map((s) => ({
@@ -629,6 +671,7 @@ export async function seedSegmentsBatch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: s.segment,
+    user_id: userId,
   }));
 
   await sql`
@@ -647,7 +690,8 @@ export async function seedSegmentsBatch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -668,13 +712,14 @@ export async function seedSegmentsBatch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${SEGMENTS_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: SEGMENTS_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${SEGMENTS_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: SEGMENTS_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -700,13 +745,15 @@ const BACKFILL_TAG = "batch_metadata_backfill_v1";
 
 export async function isBackfillDone(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BACKFILL_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BACKFILL_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function backfillScriptMetadataAction() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BACKFILL_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${BACKFILL_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     revalidatePath("/scripts");
@@ -739,18 +786,18 @@ export async function backfillScriptMetadataAction() {
     await sql`
       UPDATE scripts s SET effort = v.effort, topic_tag = v.topic_tag, segment = v.segment
       FROM (VALUES ${sql(rows.map((r) => [r.title, r.effort, r.topic_tag, r.segment]))}) AS v(title, effort, topic_tag, segment)
-      WHERE s.title = v.title
+      WHERE s.title = v.title AND s.user_id = ${userId}
     `;
     await sql`
       UPDATE calendar_items c SET effort = v.effort, topic_tag = v.topic_tag, segment = v.segment
       FROM (VALUES ${sql(rows.map((r) => [r.title, r.effort, r.topic_tag, r.segment]))}) AS v(title, effort, topic_tag, segment)
-      WHERE c.topic = v.title
+      WHERE c.topic = v.title AND c.user_id = ${userId}
     `;
   }
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${BACKFILL_TAG}, ${JSON.stringify({ backfilledAt: new Date().toISOString(), count: rows.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${BACKFILL_TAG}, ${JSON.stringify({ backfilledAt: new Date().toISOString(), count: rows.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -765,13 +812,15 @@ export async function backfillScriptMetadataAction() {
 // touching this one.
 export async function isNewCategoriesBatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedNewCategoriesBatch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -792,6 +841,7 @@ export async function seedNewCategoriesBatch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = NEW_CATEGORIES_BATCH.map((s) => ({
@@ -810,6 +860,7 @@ export async function seedNewCategoriesBatch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -828,7 +879,8 @@ export async function seedNewCategoriesBatch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -849,13 +901,14 @@ export async function seedNewCategoriesBatch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${NEW_CATEGORIES_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -874,13 +927,15 @@ export async function seedNewCategoriesBatchAction() {
 // ---------- New categories batch, Phase 2 (28 scripts, continuing from NEW_CATEGORIES_2_START_WEEK) ----------
 export async function isNewCategories2BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_2_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_2_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedNewCategories2Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_2_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_2_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -901,6 +956,7 @@ export async function seedNewCategories2Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = NEW_CATEGORIES_2_BATCH.map((s) => ({
@@ -919,6 +975,7 @@ export async function seedNewCategories2Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -937,7 +994,8 @@ export async function seedNewCategories2Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -958,13 +1016,14 @@ export async function seedNewCategories2Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_2_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_2_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${NEW_CATEGORIES_2_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_2_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -983,13 +1042,15 @@ export async function seedNewCategories2BatchAction() {
 // ---------- New categories batch, Phase 3 (28 scripts, continuing from NEW_CATEGORIES_3_START_WEEK) ----------
 export async function isNewCategories3BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_3_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_3_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedNewCategories3Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_3_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_3_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1010,6 +1071,7 @@ export async function seedNewCategories3Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = NEW_CATEGORIES_3_BATCH.map((s) => ({
@@ -1028,6 +1090,7 @@ export async function seedNewCategories3Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1046,7 +1109,8 @@ export async function seedNewCategories3Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1067,13 +1131,14 @@ export async function seedNewCategories3Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_3_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_3_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${NEW_CATEGORIES_3_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_3_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1092,13 +1157,15 @@ export async function seedNewCategories3BatchAction() {
 // ---------- New categories batch, Phase 4 (28 scripts, continuing from NEW_CATEGORIES_4_START_WEEK) ----------
 export async function isNewCategories4BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_4_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_4_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedNewCategories4Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_4_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_4_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1119,6 +1186,7 @@ export async function seedNewCategories4Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = NEW_CATEGORIES_4_BATCH.map((s) => ({
@@ -1137,6 +1205,7 @@ export async function seedNewCategories4Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1155,7 +1224,8 @@ export async function seedNewCategories4Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1176,13 +1246,14 @@ export async function seedNewCategories4Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_4_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_4_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${NEW_CATEGORIES_4_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_4_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1201,13 +1272,15 @@ export async function seedNewCategories4BatchAction() {
 // ---------- New categories batch, Phase 5 (28 scripts, continuing from NEW_CATEGORIES_5_START_WEEK) ----------
 export async function isNewCategories5BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_5_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_5_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedNewCategories5Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_5_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_5_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1228,6 +1301,7 @@ export async function seedNewCategories5Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = NEW_CATEGORIES_5_BATCH.map((s) => ({
@@ -1246,6 +1320,7 @@ export async function seedNewCategories5Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1264,7 +1339,8 @@ export async function seedNewCategories5Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1285,13 +1361,14 @@ export async function seedNewCategories5Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_5_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_5_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${NEW_CATEGORIES_5_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_5_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1310,13 +1387,15 @@ export async function seedNewCategories5BatchAction() {
 // ---------- New categories batch, Phase 6 (28 scripts, continuing from NEW_CATEGORIES_6_START_WEEK) ----------
 export async function isNewCategories6BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_6_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_6_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedNewCategories6Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_6_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${NEW_CATEGORIES_6_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1337,6 +1416,7 @@ export async function seedNewCategories6Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = NEW_CATEGORIES_6_BATCH.map((s) => ({
@@ -1355,6 +1435,7 @@ export async function seedNewCategories6Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1373,7 +1454,8 @@ export async function seedNewCategories6Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1394,13 +1476,14 @@ export async function seedNewCategories6Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${NEW_CATEGORIES_6_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_6_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${NEW_CATEGORIES_6_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: NEW_CATEGORIES_6_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1419,13 +1502,15 @@ export async function seedNewCategories6BatchAction() {
 // ---------- Journey/storytelling gap-fill batch (41 scripts, continuing from JOURNEY_START_WEEK) ----------
 export async function isJourneyBatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${JOURNEY_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${JOURNEY_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedJourneyBatch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${JOURNEY_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${JOURNEY_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1446,6 +1531,7 @@ export async function seedJourneyBatch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = JOURNEY_BATCH.map((s) => ({
@@ -1464,6 +1550,7 @@ export async function seedJourneyBatch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1482,7 +1569,8 @@ export async function seedJourneyBatch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1503,13 +1591,14 @@ export async function seedJourneyBatch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${JOURNEY_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: JOURNEY_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${JOURNEY_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: JOURNEY_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1529,13 +1618,15 @@ export async function seedJourneyBatchAction() {
 // ---------- Equal-division top-up, Phase 7 (140 scripts, continuing from CATEGORIES_7_START_WEEK) ----------
 export async function isCategories7BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_7_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_7_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedCategories7Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_7_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_7_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1556,6 +1647,7 @@ export async function seedCategories7Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = CATEGORIES_7_BATCH.map((s) => ({
@@ -1574,6 +1666,7 @@ export async function seedCategories7Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1592,7 +1685,8 @@ export async function seedCategories7Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1613,13 +1707,14 @@ export async function seedCategories7Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${CATEGORIES_7_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_7_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${CATEGORIES_7_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_7_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1639,13 +1734,15 @@ export async function seedCategories7BatchAction() {
 // ---------- Equal-division top-up, Phase 8 (130 scripts, continuing from CATEGORIES_8_START_WEEK) ----------
 export async function isCategories8BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_8_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_8_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedCategories8Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_8_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_8_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1666,6 +1763,7 @@ export async function seedCategories8Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = CATEGORIES_8_BATCH.map((s) => ({
@@ -1684,6 +1782,7 @@ export async function seedCategories8Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1702,7 +1801,8 @@ export async function seedCategories8Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1723,13 +1823,14 @@ export async function seedCategories8Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${CATEGORIES_8_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_8_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${CATEGORIES_8_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_8_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");
@@ -1749,13 +1850,15 @@ export async function seedCategories8BatchAction() {
 // ---------- Equal-division top-up, Phase 9, final phase (126 scripts, continuing from CATEGORIES_9_START_WEEK) ----------
 export async function isCategories9BatchSeeded(): Promise<boolean> {
   await ensureSchema();
-  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_9_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const rows = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_9_BATCH_TAG} AND user_id = ${userId}`;
   return rows.length > 0;
 }
 
 export async function seedCategories9Batch() {
   await ensureSchema();
-  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_9_BATCH_TAG}`;
+  const userId = await requireUserId();
+  const already = await sql<{ value: string }[]>`SELECT value FROM brand_config WHERE key = ${CATEGORIES_9_BATCH_TAG} AND user_id = ${userId}`;
   if (already.length > 0) {
     revalidatePath("/calendar");
     return { alreadySeeded: true as const, count: 0 };
@@ -1776,6 +1879,7 @@ export async function seedCategories9Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   const scriptRows = CATEGORIES_9_BATCH.map((s) => ({
@@ -1794,6 +1898,7 @@ export async function seedCategories9Batch() {
     effort: s.effort,
     topic_tag: s.topicTag,
     segment: "",
+    user_id: userId,
   }));
 
   await sql`
@@ -1812,7 +1917,8 @@ export async function seedCategories9Batch() {
       "notes",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
@@ -1833,13 +1939,14 @@ export async function seedCategories9Batch() {
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 
   await sql`
-    INSERT INTO brand_config (key, value) VALUES (${CATEGORIES_9_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_9_BATCH.length })})
-    ON CONFLICT (key) DO NOTHING
+    INSERT INTO brand_config (key, value, user_id) VALUES (${CATEGORIES_9_BATCH_TAG}, ${JSON.stringify({ seededAt: new Date().toISOString(), count: CATEGORIES_9_BATCH.length })}, ${userId})
+    ON CONFLICT (COALESCE(user_id, 0), key) DO NOTHING
   `;
 
   revalidatePath("/calendar");

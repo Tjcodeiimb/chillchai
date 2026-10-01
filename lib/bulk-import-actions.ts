@@ -3,11 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { sql, ensureSchema } from "./db";
 import { splitScriptBlocks, classifyScriptBlocks } from "./bulk-import";
+import { requireUserId } from "./auth";
 
 export type BulkImportResult = { imported: number; skipped: number };
 
 export async function bulkImportScriptsAction(_prev: BulkImportResult | null, fd: FormData): Promise<BulkImportResult> {
   await ensureSchema();
+  const userId = await requireUserId();
   const raw = String(fd.get("raw") || "");
   const blocks = splitScriptBlocks(raw);
   if (blocks.length === 0) return { imported: 0, skipped: 0 };
@@ -18,7 +20,7 @@ export async function bulkImportScriptsAction(_prev: BulkImportResult | null, fd
   const toImport = blocks.slice(0, MAX_BATCH);
   const skipped = blocks.length - toImport.length;
 
-  const classified = await classifyScriptBlocks(toImport);
+  const classified = await classifyScriptBlocks(userId, toImport);
 
   const rows = classified.map((c) => ({
     title: c.title,
@@ -36,6 +38,7 @@ export async function bulkImportScriptsAction(_prev: BulkImportResult | null, fd
     effort: c.effort,
     topic_tag: c.topicTag,
     segment: c.segment,
+    user_id: userId,
   }));
 
   await sql`
@@ -55,7 +58,8 @@ export async function bulkImportScriptsAction(_prev: BulkImportResult | null, fd
       "series_name",
       "effort",
       "topic_tag",
-      "segment"
+      "segment",
+      "user_id"
     )}
   `;
 

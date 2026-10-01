@@ -40,10 +40,21 @@ export function ensureSchema(): Promise<void> {
 // parameters here.
 async function initSchema() {
   await sql`
-    CREATE TABLE IF NOT EXISTS brand_config (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS brand_config (
+      key TEXT NOT NULL,
+      value TEXT NOT NULL,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+    );
+    ALTER TABLE brand_config ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+    ALTER TABLE brand_config DROP CONSTRAINT IF EXISTS brand_config_pkey;
+    CREATE UNIQUE INDEX IF NOT EXISTS brand_config_user_key_idx ON brand_config (COALESCE(user_id, 0), key);
 
     CREATE TABLE IF NOT EXISTS calendar_items (
       id SERIAL PRIMARY KEY,
@@ -67,7 +78,9 @@ async function initSchema() {
     ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS topic_tag TEXT NOT NULL DEFAULT '';
     ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT '';
     ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS script_id INTEGER;
+    ALTER TABLE calendar_items ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
     CREATE INDEX IF NOT EXISTS calendar_items_date_idx ON calendar_items (date);
+    CREATE INDEX IF NOT EXISTS calendar_items_user_idx ON calendar_items (user_id);
 
     CREATE TABLE IF NOT EXISTS outlier_research (
       id SERIAL PRIMARY KEY,
@@ -85,6 +98,7 @@ async function initSchema() {
       used BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE outlier_research ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 
     CREATE TABLE IF NOT EXISTS hook_stacks (
       id SERIAL PRIMARY KEY,
@@ -96,6 +110,7 @@ async function initSchema() {
       saved BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE hook_stacks ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 
     CREATE TABLE IF NOT EXISTS scripts (
       id SERIAL PRIMARY KEY,
@@ -119,6 +134,8 @@ async function initSchema() {
     ALTER TABLE scripts ADD COLUMN IF NOT EXISTS effort TEXT NOT NULL DEFAULT 'default';
     ALTER TABLE scripts ADD COLUMN IF NOT EXISTS topic_tag TEXT NOT NULL DEFAULT '';
     ALTER TABLE scripts ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT '';
+    ALTER TABLE scripts ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+    CREATE INDEX IF NOT EXISTS scripts_user_idx ON scripts (user_id);
 
     CREATE TABLE IF NOT EXISTS script_templates (
       id SERIAL PRIMARY KEY,
@@ -129,6 +146,7 @@ async function initSchema() {
       template_text TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE script_templates ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 
     CREATE TABLE IF NOT EXISTS ai_settings (
       id SERIAL PRIMARY KEY,
@@ -136,8 +154,10 @@ async function initSchema() {
       api_key TEXT NOT NULL DEFAULT '',
       model TEXT NOT NULL DEFAULT '',
       custom_endpoint TEXT NOT NULL DEFAULT '',
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
     );
+    ALTER TABLE ai_settings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 
     CREATE TABLE IF NOT EXISTS own_posts (
       id SERIAL PRIMARY KEY,
@@ -149,5 +169,6 @@ async function initSchema() {
       notes TEXT DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE own_posts ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
   `.simple();
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "./components/Nav";
+import Tutorial from "./components/Tutorial";
 
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col md:flex-row bg-background text-foreground">
         <Nav />
         <main className="flex-1 min-w-0 px-4 py-6 md:px-10 md:py-10">{children}</main>
+        <Tutorial />
       </body>
     </html>
   );
