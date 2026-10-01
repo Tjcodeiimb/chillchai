@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { generateText } from "@/lib/ai-providers";
 
 export async function POST(req: NextRequest) {
-  const unauthorized = requireAuth(req);
-  if (unauthorized) return unauthorized;
+  const userId = await getCurrentUserId();
+  if (userId === null) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const { prompt } = (await req.json()) as { prompt?: string };
 
@@ -12,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad_request", message: "Missing prompt" }, { status: 400 });
   }
 
-  const result = await generateText(prompt);
+  const result = await generateText(userId, prompt);
   if (result.ok) {
     return NextResponse.json({ text: result.text });
   }

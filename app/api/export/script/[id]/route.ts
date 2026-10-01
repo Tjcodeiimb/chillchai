@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { buildScriptDoc, toBuffer } from "@/lib/docx-export";
 
@@ -16,12 +16,14 @@ type ScriptRow = {
   funnel_stage: string;
 };
 
-export async function GET(req: NextRequest, ctx: RouteContext<"/api/export/script/[id]">) {
-  const unauthorized = requireAuth(req);
-  if (unauthorized) return unauthorized;
+export async function GET(_req: NextRequest, ctx: RouteContext<"/api/export/script/[id]">) {
+  const userId = await getCurrentUserId();
+  if (userId === null) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const { id } = await ctx.params;
-  const rows = await sql<ScriptRow[]>`SELECT * FROM scripts WHERE id = ${Number(id)}`;
+  const rows = await sql<ScriptRow[]>`SELECT * FROM scripts WHERE id = ${Number(id)} AND user_id = ${userId}`;
   const script = rows[0];
   if (!script) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });

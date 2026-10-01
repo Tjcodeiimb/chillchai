@@ -42,12 +42,15 @@ export default function Tutorial() {
 
   useEffect(() => {
     if (skip) return;
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setOpen(true);
-    } catch {
-      // Private browsing / blocked storage -- just skip the tutorial rather
-      // than showing it every load with no way to dismiss it permanently.
-    }
+    const timer = setTimeout(() => {
+      try {
+        if (!localStorage.getItem(STORAGE_KEY)) setOpen(true);
+      } catch {
+        // Private browsing / blocked storage -- just skip the tutorial rather
+        // than showing it every load with no way to dismiss it permanently.
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [skip]);
 
   function dismiss() {

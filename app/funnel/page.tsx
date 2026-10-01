@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import CaptionGenerator from "./CaptionGenerator";
 
@@ -8,10 +9,11 @@ type Item = { id: number; topic: string; funnel_stage: string; cta_type: string;
 export const dynamic = "force-dynamic";
 
 export default async function FunnelPage() {
+  const userId = await requireUserId();
   const [brand, items] = await Promise.all([
-    getBrand(),
+    getBrand(userId),
     sql<Item[]>`
-      SELECT id, topic, funnel_stage, cta_type, status FROM calendar_items ORDER BY date ASC
+      SELECT id, topic, funnel_stage, cta_type, status FROM calendar_items WHERE user_id = ${userId} ORDER BY date ASC
     `,
   ]);
 

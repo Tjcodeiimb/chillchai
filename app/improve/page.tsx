@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { Card, SectionHeader } from "../components/ui";
 import { SCRIPT_ANGLES, STORY_TYPES, FILMING_FORMATS } from "@/lib/reference";
 import ImproveClient, { type ExistingScript } from "./ImproveClient";
@@ -7,14 +8,15 @@ import ImproveClient, { type ExistingScript } from "./ImproveClient";
 export const dynamic = "force-dynamic";
 
 export default async function ImprovePage() {
+  const userId = await requireUserId();
   const [brand, scripts] = await Promise.all([
-    getBrand(),
+    getBrand(userId),
     // Metadata only -- the selected script's body is fetched lazily (see
     // /api/scripts/[id]/body) instead of shipping every script's full body
     // text on every Script Improver visit.
     sql<ExistingScript[]>`
       SELECT id, title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage
-      FROM scripts ORDER BY created_at DESC
+      FROM scripts WHERE user_id = ${userId} ORDER BY created_at DESC
     `,
   ]);
 

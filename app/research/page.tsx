@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { buildKeywordBankPrompt } from "@/lib/prompts";
 import { FIVE_X_OUTLIER_RULE, SCRIPT_ANGLES } from "@/lib/reference";
 import { createOutlier, toggleOutlierUsed, deleteOutlier } from "@/lib/actions";
@@ -26,9 +27,10 @@ type Outlier = {
 export const dynamic = "force-dynamic";
 
 export default async function ResearchPage() {
+  const userId = await requireUserId();
   const [brand, rows] = await Promise.all([
-    getBrand(),
-    sql<Outlier[]>`SELECT * FROM outlier_research ORDER BY created_at DESC`,
+    getBrand(userId),
+    sql<Outlier[]>`SELECT * FROM outlier_research WHERE user_id = ${userId} ORDER BY created_at DESC`,
   ]);
   const keywordPrompt = buildKeywordBankPrompt(brand);
 

@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { FILMING_FORMATS } from "@/lib/reference";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import ShotListClient from "./ShotListClient";
@@ -8,12 +9,13 @@ import FolderNamer from "./FolderNamer";
 export const dynamic = "force-dynamic";
 
 export default async function ProductionPage() {
+  const userId = await requireUserId();
   const [brand, scripts] = await Promise.all([
-    getBrand(),
+    getBrand(userId),
     // Metadata only -- the selected script's body is fetched lazily (see
     // /api/scripts/[id]/body) instead of shipping every script's full body
     // text on every Production Planner visit.
-    sql<{ id: number; title: string }[]>`SELECT id, title FROM scripts ORDER BY created_at DESC`,
+    sql<{ id: number; title: string }[]>`SELECT id, title FROM scripts WHERE user_id = ${userId} ORDER BY created_at DESC`,
   ]);
 
   return (

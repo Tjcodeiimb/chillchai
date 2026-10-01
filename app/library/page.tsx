@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { requireUserId } from "@/lib/auth";
 import { backfillScriptMetadataAction, isBackfillDone } from "@/lib/actions";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import LibraryClient from "./LibraryClient";
@@ -27,11 +28,12 @@ export type LibraryScript = {
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
+  const userId = await requireUserId();
   const [scripts, backfillDone] = await Promise.all([
     sql<LibraryScript[]>`
       SELECT id, title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage,
              status, series_name, effort, topic_tag, segment
-      FROM scripts ORDER BY created_at DESC
+      FROM scripts WHERE user_id = ${userId} ORDER BY created_at DESC
     `,
     isBackfillDone(),
   ]);

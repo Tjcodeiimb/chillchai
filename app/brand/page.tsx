@@ -1,4 +1,5 @@
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { PROFILE_RIGHT_WRONG } from "@/lib/reference";
 import { Card, SectionHeader } from "../components/ui";
 import BrandForm from "./BrandForm";
@@ -6,7 +7,8 @@ import BrandForm from "./BrandForm";
 export const dynamic = "force-dynamic";
 
 export default async function BrandPage() {
-  const brand = await getBrand();
+  const userId = await requireUserId();
+  const brand = await getBrand(userId);
 
   return (
     <div>

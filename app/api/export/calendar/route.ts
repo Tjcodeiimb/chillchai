@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 import { buildCalendarDoc, toBuffer } from "@/lib/docx-export";
@@ -17,12 +17,14 @@ type CalendarRow = {
   status: string;
 };
 
-export async function GET(req: NextRequest) {
-  const unauthorized = requireAuth(req);
-  if (unauthorized) return unauthorized;
+export async function GET(_req: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (userId === null) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
-  const items = await sql<CalendarRow[]>`SELECT * FROM calendar_items ORDER BY date ASC`;
-  const brand = await getBrand();
+  const items = await sql<CalendarRow[]>`SELECT * FROM calendar_items WHERE user_id = ${userId} ORDER BY date ASC`;
+  const brand = await getBrand(userId);
 
   const buffer = await toBuffer(buildCalendarDoc(items, brand));
 

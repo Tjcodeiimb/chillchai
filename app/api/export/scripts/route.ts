@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { buildScriptBankDoc, toBuffer } from "@/lib/docx-export";
 
@@ -16,12 +16,14 @@ type ScriptRow = {
 };
 type TemplateRow = { name: string; pillar: string; angle: string; template_text: string };
 
-export async function GET(req: NextRequest) {
-  const unauthorized = requireAuth(req);
-  if (unauthorized) return unauthorized;
+export async function GET(_req: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (userId === null) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
-  const scripts = await sql<ScriptRow[]>`SELECT * FROM scripts ORDER BY created_at DESC`;
-  const templates = await sql<TemplateRow[]>`SELECT * FROM script_templates ORDER BY created_at DESC`;
+  const scripts = await sql<ScriptRow[]>`SELECT * FROM scripts WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  const templates = await sql<TemplateRow[]>`SELECT * FROM script_templates WHERE user_id = ${userId} ORDER BY created_at DESC`;
 
   const buffer = await toBuffer(buildScriptBankDoc(scripts, templates));
 

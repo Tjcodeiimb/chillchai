@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { createOwnPost, deleteOwnPost } from "@/lib/actions";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
 import DoubleDownClient from "./DoubleDownClient";
@@ -17,9 +18,10 @@ type Post = {
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
+  const userId = await requireUserId();
   const [brand, posts] = await Promise.all([
-    getBrand(),
-    sql<Post[]>`SELECT * FROM own_posts ORDER BY posted_date DESC`,
+    getBrand(userId),
+    sql<Post[]>`SELECT * FROM own_posts WHERE user_id = ${userId} ORDER BY posted_date DESC`,
   ]);
 
   const withMultiple = posts.map((p) => ({

@@ -1,11 +1,13 @@
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { SectionHeader } from "../components/ui";
 import PromptsClient from "./PromptsClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function PromptsPage() {
-  const brand = await getBrand();
+  const userId = await requireUserId();
+  const brand = await getBrand(userId);
   const hasKey = !!process.env.GEMINI_API_KEY;
 
   return (

@@ -1,11 +1,13 @@
 import { getMaskedAiSettings, AI_PROVIDERS, PROVIDER_LABELS, DEFAULT_MODELS } from "@/lib/ai-providers";
+import { requireUserId } from "@/lib/auth";
 import { Card, SectionHeader } from "../components/ui";
 import SettingsClient, { RemoveKeyButton } from "./SettingsClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const settings = await getMaskedAiSettings();
+  const userId = await requireUserId();
+  const settings = await getMaskedAiSettings(userId);
 
   return (
     <div>

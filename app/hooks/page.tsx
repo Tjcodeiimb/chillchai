@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { SCRIPT_ANGLES, UNIVERSAL_HOOK_TEMPLATES } from "@/lib/reference";
 import { createHookStack, deleteHookStack } from "@/lib/actions";
 import { Card, SectionHeader, Badge, DeleteForm } from "../components/ui";
@@ -17,9 +18,10 @@ type HookStack = {
 export const dynamic = "force-dynamic";
 
 export default async function HooksPage() {
+  const userId = await requireUserId();
   const [brand, stacks] = await Promise.all([
-    getBrand(),
-    sql<HookStack[]>`SELECT * FROM hook_stacks ORDER BY created_at DESC`,
+    getBrand(userId),
+    sql<HookStack[]>`SELECT * FROM hook_stacks WHERE user_id = ${userId} ORDER BY created_at DESC`,
   ]);
   const inputClass = "w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5";
   const selectClass = inputClass;

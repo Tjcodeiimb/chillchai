@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { Card, SectionHeader, Badge } from "./components/ui";
 
 function levelFor(followers: number) {
@@ -12,16 +13,17 @@ function levelFor(followers: number) {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const userId = await requireUserId();
   const [brand, pillarCounts, conceptCounts, upcoming] = await Promise.all([
-    getBrand(),
+    getBrand(userId),
     sql<{ pillar: string; n: number }[]>`
-      SELECT pillar, COUNT(*)::int as n FROM calendar_items GROUP BY pillar
+      SELECT pillar, COUNT(*)::int as n FROM calendar_items WHERE user_id = ${userId} GROUP BY pillar
     `,
     sql<{ concept_bucket: string; n: number }[]>`
-      SELECT concept_bucket, COUNT(*)::int as n FROM calendar_items GROUP BY concept_bucket
+      SELECT concept_bucket, COUNT(*)::int as n FROM calendar_items WHERE user_id = ${userId} GROUP BY concept_bucket
     `,
     sql<{ id: number; date: string; topic: string; pillar: string; status: string }[]>`
-      SELECT * FROM calendar_items WHERE status != 'posted' ORDER BY date ASC LIMIT 6
+      SELECT * FROM calendar_items WHERE status != 'posted' AND user_id = ${userId} ORDER BY date ASC LIMIT 6
     `,
   ]);
 

@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
+import { requireUserId } from "@/lib/auth";
 import { buildCalendarIdeationPrompt } from "@/lib/prompts";
 import { SCRIPT_ANGLES, FILMING_FORMATS, CTA_TYPES, FUNNEL_STAGES, CALENDAR_STATUSES, CONCEPT_BUCKETS } from "@/lib/reference";
 import {
@@ -56,6 +57,7 @@ const FULL_OCT_BATCH = [...OCT_2026_BATCH, ...OCT_2026_BATCH_EXT];
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
+  const userId = await requireUserId();
   const [
     brand,
     items,
@@ -75,9 +77,9 @@ export default async function CalendarPage() {
     categories8BatchSeeded,
     categories9BatchSeeded,
   ] = await Promise.all([
-    getBrand(),
-    sql<CalendarItem[]>`SELECT * FROM calendar_items ORDER BY date ASC`,
-    sql<PickerScript[]>`SELECT id, title, funnel_stage, topic_tag, effort FROM scripts ORDER BY title ASC`,
+    getBrand(userId),
+    sql<CalendarItem[]>`SELECT * FROM calendar_items WHERE user_id = ${userId} ORDER BY date ASC`,
+    sql<PickerScript[]>`SELECT id, title, funnel_stage, topic_tag, effort FROM scripts WHERE user_id = ${userId} ORDER BY title ASC`,
     isOctoberBatchSeeded(),
     isGrowthBatchSeeded(),
     isCommentaryBatchSeeded(),
