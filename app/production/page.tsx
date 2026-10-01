@@ -10,9 +10,10 @@ export const dynamic = "force-dynamic";
 export default async function ProductionPage() {
   const [brand, scripts] = await Promise.all([
     getBrand(),
-    sql<
-      { id: number; title: string; body_black: string; body_red: string; body_green: string }[]
-    >`SELECT id, title, body_black, body_red, body_green FROM scripts ORDER BY created_at DESC`,
+    // Metadata only -- the selected script's body is fetched lazily (see
+    // /api/scripts/[id]/body) instead of shipping every script's full body
+    // text on every Production Planner visit.
+    sql<{ id: number; title: string }[]>`SELECT id, title FROM scripts ORDER BY created_at DESC`,
   ]);
 
   return (

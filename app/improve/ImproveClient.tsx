@@ -16,9 +16,6 @@ export type ExistingScript = {
   format: string;
   cta_type: string;
   funnel_stage: string;
-  body_black: string;
-  body_red: string;
-  body_green: string;
 };
 
 const selectClass = "w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5";
@@ -46,7 +43,7 @@ export default function ImproveClient({ brand, scripts }: { brand: BrandConfig; 
     return scripts.filter((s) => s.title.toLowerCase().includes(q));
   }, [scripts, scriptSearch]);
 
-  function loadFromLibrary(id: string) {
+  async function loadFromLibrary(id: string) {
     setSelectedId(id);
     const found = scripts.find((s) => String(s.id) === id);
     if (!found) return;
@@ -56,9 +53,14 @@ export default function ImproveClient({ brand, scripts }: { brand: BrandConfig; 
     setFormat(found.format || "");
     setFunnelStage((found.funnel_stage as (typeof FUNNEL_STAGES)[number]) || "tofu");
     setCtaType((found.cta_type as (typeof CTA_TYPES)[number]) || "follow");
-    setBodyBlack(found.body_black || "");
-    setBodyRed(found.body_red || "");
-    setBodyGreen(found.body_green || "");
+    setBodyBlack("");
+    setBodyRed("");
+    setBodyGreen("");
+    const res = await fetch(`/api/scripts/${id}/body`);
+    const body = (await res.json()) as { body_black: string; body_red: string; body_green: string };
+    setBodyBlack(body.body_black || "");
+    setBodyRed(body.body_red || "");
+    setBodyGreen(body.body_green || "");
   }
 
   const prompt = useMemo(() => {

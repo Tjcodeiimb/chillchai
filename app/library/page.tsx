@@ -3,6 +3,10 @@ import { backfillScriptMetadataAction, isBackfillDone } from "@/lib/actions";
 import { Card, SectionHeader, Badge } from "../components/ui";
 import LibraryClient from "./LibraryClient";
 
+// Metadata only -- body_black/body_red/body_green are fetched lazily per
+// script on expand (see /api/scripts/[id]/body) instead of being shipped
+// for all 1000+ scripts on every page load, which was the single biggest
+// contributor to this page's slow load time.
 export type LibraryScript = {
   id: number;
   title: string;
@@ -17,9 +21,6 @@ export type LibraryScript = {
   effort: string;
   topic_tag: string;
   segment: string;
-  body_black: string;
-  body_red: string;
-  body_green: string;
 };
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function LibraryPage() {
   const [scripts, backfillDone] = await Promise.all([
     sql<LibraryScript[]>`
       SELECT id, title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage,
-             status, series_name, effort, topic_tag, segment, body_black, body_red, body_green
+             status, series_name, effort, topic_tag, segment
       FROM scripts ORDER BY created_at DESC
     `,
     isBackfillDone(),

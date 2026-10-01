@@ -41,6 +41,8 @@ function Select({
   );
 }
 
+type Body = { body_black: string; body_red: string; body_green: string };
+
 export default function LibraryClient({ scripts }: { scripts: LibraryScript[] }) {
   const [funnel, setFunnel] = useState(ALL);
   const [effort, setEffort] = useState(ALL);
@@ -50,6 +52,21 @@ export default function LibraryClient({ scripts }: { scripts: LibraryScript[] })
   const [pillar, setPillar] = useState(ALL);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [bodies, setBodies] = useState<Record<number, Body | "loading">>({});
+
+  async function toggleExpand(id: number) {
+    if (expandedId === id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(id);
+    if (!bodies[id]) {
+      setBodies((b) => ({ ...b, [id]: "loading" }));
+      const res = await fetch(`/api/scripts/${id}/body`);
+      const body = (await res.json()) as Body;
+      setBodies((b) => ({ ...b, [id]: body }));
+    }
+  }
 
   const funnelOptions = useMemo(() => uniqueSorted(scripts.map((s) => s.funnel_stage)), [scripts]);
   const effortOptions = useMemo(() => uniqueSorted(scripts.map((s) => s.effort)), [scripts]);
@@ -71,6 +88,11 @@ export default function LibraryClient({ scripts }: { scripts: LibraryScript[] })
       return true;
     });
   }, [scripts, funnel, effort, topicTag, segment, contentType, pillar, search]);
+
+  // Keying the results list on the filter combination below remounts it
+  // (resetting its internal page count to 1) whenever a filter changes,
+  // without needing an effect or a ref read during render.
+  const filterKey = `${funnel}|${effort}|${topicTag}|${segment}|${contentType}|${pillar}|${search}`;
 
   const resetFilters = () => {
     setFunnel(ALL);
@@ -109,17 +131,48 @@ export default function LibraryClient({ scripts }: { scripts: LibraryScript[] })
         </div>
       </Card>
 
+      <ResultsList
+        key={filterKey}
+        filtered={filtered}
+        total={scripts.length}
+        expandedId={expandedId}
+        bodies={bodies}
+        toggleExpand={toggleExpand}
+      />
+    </div>
+  );
+}
+
+function ResultsList({
+  filtered,
+  total,
+  expandedId,
+  bodies,
+  toggleExpand,
+}: {
+  filtered: LibraryScript[];
+  total: number;
+  expandedId: number | null;
+  bodies: Record<number, Body | "loading">;
+  toggleExpand: (id: number) => void;
+}) {
+  const PAGE_SIZE = 40;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visible = filtered.slice(0, visibleCount);
+
+  return (
+    <>
       <p className="text-xs text-muted mb-3">
-        Showing {filtered.length} of {scripts.length} scripts
+        Showing {visible.length} of {filtered.length} matching scripts ({total} total)
       </p>
 
       <div className="space-y-2">
-        {filtered.map((s) => {
+        {visible.map((s) => {
           const expanded = expandedId === s.id;
           return (
             <div key={s.id} className="rounded-lg border border-border/10 p-3">
               <button
-                onClick={() => setExpandedId(expanded ? null : s.id)}
+                onClick={() => toggleExpand(s.id)}
                 className="w-full text-left flex flex-wrap items-center justify-between gap-2"
               >
                 <span className="text-sm font-medium">{s.title}</span>
@@ -140,12 +193,18 @@ export default function LibraryClient({ scripts }: { scripts: LibraryScript[] })
                     <span className="text-foreground/70">Format:</span> {s.format} ·{" "}
                     <span className="text-foreground/70">CTA:</span> {s.cta_type}
                   </p>
-                  <p className="text-foreground/70">BLACK (spoken):</p>
-                  <p className="whitespace-pre-line">{s.body_black}</p>
-                  <p className="text-foreground/70">RED (camera/action):</p>
-                  <p className="whitespace-pre-line">{s.body_red}</p>
-                  <p className="text-foreground/70">GREEN (editing):</p>
-                  <p className="whitespace-pre-line">{s.body_green}</p>
+                  {bodies[s.id] === "loading" || !bodies[s.id] ? (
+                    <p className="text-muted">Loading script...</p>
+                  ) : (
+                    <>
+                      <p className="text-foreground/70">BLACK (spoken):</p>
+                      <p className="whitespace-pre-line">{(bodies[s.id] as Body).body_black}</p>
+                      <p className="text-foreground/70">RED (camera/action):</p>
+                      <p className="whitespace-pre-line">{(bodies[s.id] as Body).body_red}</p>
+                      <p className="text-foreground/70">GREEN (editing):</p>
+                      <p className="whitespace-pre-line">{(bodies[s.id] as Body).body_green}</p>
+                    </>
+                  )}
                   <form action={scheduleScriptToCalendar} className="flex items-center gap-2 pt-2">
                     <input type="hidden" name="script_id" value={s.id} />
                     <label className="text-foreground/70">Add to calendar:</label>
@@ -166,6 +225,15 @@ export default function LibraryClient({ scripts }: { scripts: LibraryScript[] })
         })}
         {filtered.length === 0 && <p className="text-sm text-muted">No scripts match these filters.</p>}
       </div>
-    </div>
+      {visibleCount < filtered.length && (
+        <button
+          onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          className="mt-4 w-full text-sm rounded-full border border-border/20 px-4 py-2.5 hover:bg-foreground/5"
+        >
+          Load {Math.min(PAGE_SIZE, filtered.length - visibleCount)} more (
+          {filtered.length - visibleCount} remaining)
+        </button>
+      )}
+    </>
   );
 }

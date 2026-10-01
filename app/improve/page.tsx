@@ -9,9 +9,11 @@ export const dynamic = "force-dynamic";
 export default async function ImprovePage() {
   const [brand, scripts] = await Promise.all([
     getBrand(),
+    // Metadata only -- the selected script's body is fetched lazily (see
+    // /api/scripts/[id]/body) instead of shipping every script's full body
+    // text on every Script Improver visit.
     sql<ExistingScript[]>`
-      SELECT id, title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage,
-             body_black, body_red, body_green
+      SELECT id, title, pillar, content_type, angle_or_story_type, format, cta_type, funnel_stage
       FROM scripts ORDER BY created_at DESC
     `,
   ]);

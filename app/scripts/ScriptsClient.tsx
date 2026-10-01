@@ -24,12 +24,6 @@ type ScriptRow = {
   id: number;
   title: string;
   pillar: string;
-  content_type: string;
-  angle_or_story_type: string;
-  format: string;
-  body_black: string;
-  body_red: string;
-  body_green: string;
   status: string;
   series_name: string;
 };
@@ -395,7 +389,22 @@ function TranscriptTab() {
   );
 }
 
+type ScriptBody = { body_black: string; body_red: string; body_green: string };
+
 function BankTab({ scripts, templates }: { scripts: ScriptRow[]; templates: TemplateRow[] }) {
+  const [bodies, setBodies] = useState<Record<number, ScriptBody | "loading">>({});
+  const PAGE_SIZE = 40;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visibleScripts = scripts.slice(0, visibleCount);
+
+  async function loadBody(id: number) {
+    if (bodies[id]) return;
+    setBodies((b) => ({ ...b, [id]: "loading" }));
+    const res = await fetch(`/api/scripts/${id}/body`);
+    const body = (await res.json()) as ScriptBody;
+    setBodies((b) => ({ ...b, [id]: body }));
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -439,29 +448,46 @@ function BankTab({ scripts, templates }: { scripts: ScriptRow[]; templates: Temp
           <p className="text-sm text-muted">No scripts saved yet.</p>
         ) : (
           <div className="space-y-3">
-            {scripts.map((s) => (
-              <details key={s.id} className="rounded-lg border border-border/10 p-3">
-                <summary className="cursor-pointer text-sm font-medium flex items-center justify-between">
-                  <span>{s.title}</span>
-                  <span className="flex gap-2">
-                    <Badge>{s.pillar}</Badge>
-                    <Badge>{s.status}</Badge>
-                  </span>
-                </summary>
-                <div className="mt-3 text-xs space-y-2">
-                  {s.body_black && <p><span className="text-foreground font-medium">Black:</span> <span className="text-muted whitespace-pre-wrap">{s.body_black}</span></p>}
-                  {s.body_red && <p><span className="text-red-400 font-medium">Red:</span> <span className="text-muted whitespace-pre-wrap">{s.body_red}</span></p>}
-                  {s.body_green && <p><span className="text-green-400 font-medium">Green:</span> <span className="text-muted whitespace-pre-wrap">{s.body_green}</span></p>}
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <a href={`/api/export/script/${s.id}`} className="text-xs text-accent hover:underline">
-                    Export to Word
-                  </a>
-                  <DeleteForm action={deleteScript} id={s.id} />
-                </div>
-              </details>
-            ))}
+            {visibleScripts.map((s) => {
+              const body = bodies[s.id];
+              return (
+                <details key={s.id} className="rounded-lg border border-border/10 p-3" onToggle={(e) => e.currentTarget.open && loadBody(s.id)}>
+                  <summary className="cursor-pointer text-sm font-medium flex items-center justify-between">
+                    <span>{s.title}</span>
+                    <span className="flex gap-2">
+                      <Badge>{s.pillar}</Badge>
+                      <Badge>{s.status}</Badge>
+                    </span>
+                  </summary>
+                  <div className="mt-3 text-xs space-y-2">
+                    {!body || body === "loading" ? (
+                      <p className="text-muted">Loading script...</p>
+                    ) : (
+                      <>
+                        {body.body_black && <p><span className="text-foreground font-medium">Black:</span> <span className="text-muted whitespace-pre-wrap">{body.body_black}</span></p>}
+                        {body.body_red && <p><span className="text-red-400 font-medium">Red:</span> <span className="text-muted whitespace-pre-wrap">{body.body_red}</span></p>}
+                        {body.body_green && <p><span className="text-green-400 font-medium">Green:</span> <span className="text-muted whitespace-pre-wrap">{body.body_green}</span></p>}
+                      </>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <a href={`/api/export/script/${s.id}`} className="text-xs text-accent hover:underline">
+                      Export to Word
+                    </a>
+                    <DeleteForm action={deleteScript} id={s.id} />
+                  </div>
+                </details>
+              );
+            })}
           </div>
+        )}
+        {visibleCount < scripts.length && (
+          <button
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+            className="mt-4 w-full text-sm rounded-full border border-border/20 px-4 py-2.5 hover:bg-foreground/5"
+          >
+            Load {Math.min(PAGE_SIZE, scripts.length - visibleCount)} more ({scripts.length - visibleCount} remaining)
+          </button>
         )}
       </Card>
 

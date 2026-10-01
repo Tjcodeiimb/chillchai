@@ -5,10 +5,9 @@ import { useMemo, useState } from "react";
 type ScriptRow = {
   id: number;
   title: string;
-  body_black: string;
-  body_red: string;
-  body_green: string;
 };
+
+type ScriptBody = { body_black: string; body_red: string; body_green: string };
 
 function toLines(text: string) {
   return text
@@ -20,24 +19,34 @@ function toLines(text: string) {
 export default function ShotListClient({ scripts }: { scripts: ScriptRow[] }) {
   const [scriptId, setScriptId] = useState<string>("");
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [body, setBody] = useState<ScriptBody | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const script = scripts.find((s) => String(s.id) === scriptId);
-  const dialogueLines = useMemo(() => (script ? toLines(script.body_black) : []), [script]);
-  const actionLines = useMemo(() => (script ? toLines(script.body_red) : []), [script]);
-  const editLines = useMemo(() => (script ? toLines(script.body_green) : []), [script]);
+  const dialogueLines = useMemo(() => (body ? toLines(body.body_black) : []), [body]);
+  const actionLines = useMemo(() => (body ? toLines(body.body_red) : []), [body]);
+  const editLines = useMemo(() => (body ? toLines(body.body_green) : []), [body]);
 
   function toggle(key: string) {
     setChecked((c) => ({ ...c, [key]: !c[key] }));
+  }
+
+  async function selectScript(id: string) {
+    setScriptId(id);
+    setChecked({});
+    setBody(null);
+    if (!id) return;
+    setLoading(true);
+    const res = await fetch(`/api/scripts/${id}/body`);
+    setBody((await res.json()) as ScriptBody);
+    setLoading(false);
   }
 
   return (
     <div>
       <select
         value={scriptId}
-        onChange={(e) => {
-          setScriptId(e.target.value);
-          setChecked({});
-        }}
+        onChange={(e) => selectScript(e.target.value)}
         className="w-full rounded-lg border border-border/15 bg-foreground/95 text-background text-sm p-2.5 mb-4"
       >
         <option value="">Select a saved script…</option>
@@ -48,7 +57,9 @@ export default function ShotListClient({ scripts }: { scripts: ScriptRow[] }) {
         ))}
       </select>
 
-      {script && (
+      {script && loading && <p className="text-sm text-muted">Loading script...</p>}
+
+      {script && body && (
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <h4 className="text-sm font-medium mb-2">Film — line by line (black)</h4>

@@ -8,7 +8,10 @@ export const dynamic = "force-dynamic";
 export default async function ScriptsPage() {
   const [brand, scripts, templates] = await Promise.all([
     getBrand(),
-    sql`SELECT * FROM scripts ORDER BY created_at DESC`,
+    // Metadata only -- bodies are fetched lazily per script on expand (see
+    // /api/scripts/[id]/body), since shipping every script's full body text
+    // on every Script Studio visit was a major contributor to slow loads.
+    sql`SELECT id, title, pillar, status, series_name FROM scripts ORDER BY created_at DESC`,
     sql`SELECT * FROM script_templates ORDER BY created_at DESC`,
   ]);
 
