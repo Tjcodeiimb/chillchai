@@ -16,12 +16,14 @@ export default function PromptRunner({
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<null | "ok" | "no_key" | "quota" | "error">(null);
+  const [errorMessage, setErrorMessage] = useState("");
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);
 
   async function handleGenerate() {
     setLoading(true);
     setStatus(null);
+    setErrorMessage("");
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -38,6 +40,7 @@ export default function PromptRunner({
         setStatus("quota");
       } else {
         setStatus("error");
+        setErrorMessage(data.message || "");
       }
     } catch {
       setStatus("error");
@@ -101,7 +104,14 @@ export default function PromptRunner({
         </p>
       )}
       {status === "error" && (
-        <p className="text-xs text-red-400 mt-2">Generation failed — copy the prompt and run it manually.</p>
+        <p className="text-xs text-red-400 mt-2">
+          Generation failed{errorMessage ? `: ${errorMessage}` : ""} — copy the prompt and run it manually, or check
+          your provider/key in{" "}
+          <a href="/settings" className="underline">
+            Settings
+          </a>
+          .
+        </p>
       )}
 
       {output && (
