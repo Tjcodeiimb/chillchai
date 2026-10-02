@@ -170,5 +170,38 @@ async function initSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     ALTER TABLE own_posts ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+
+    CREATE TABLE IF NOT EXISTS carousels (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL DEFAULT 'Untitled carousel',
+      pillar TEXT NOT NULL DEFAULT 'authority',
+      content_type TEXT NOT NULL DEFAULT 'educational',
+      archetype TEXT NOT NULL DEFAULT 'listicle',
+      cta_type TEXT NOT NULL DEFAULT 'save',
+      funnel_stage TEXT NOT NULL DEFAULT 'tofu',
+      status TEXT NOT NULL DEFAULT 'draft',
+      topic_tag TEXT NOT NULL DEFAULT '',
+      segment TEXT NOT NULL DEFAULT '',
+      slide_count INTEGER NOT NULL DEFAULT 0,
+      background_style TEXT NOT NULL DEFAULT 'solid',
+      background_category TEXT NOT NULL DEFAULT '',
+      design_notes TEXT NOT NULL DEFAULT '',
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS carousels_user_idx ON carousels (user_id);
+
+    CREATE TABLE IF NOT EXISTS carousel_slides (
+      id SERIAL PRIMARY KEY,
+      carousel_id INTEGER NOT NULL REFERENCES carousels(id) ON DELETE CASCADE,
+      slide_number INTEGER NOT NULL,
+      slide_role TEXT NOT NULL DEFAULT 'body',
+      headline TEXT NOT NULL DEFAULT '',
+      supporting_text TEXT NOT NULL DEFAULT '',
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS carousel_slides_carousel_idx ON carousel_slides (carousel_id);
+    CREATE INDEX IF NOT EXISTS carousel_slides_user_idx ON carousel_slides (user_id);
   `.simple();
 }

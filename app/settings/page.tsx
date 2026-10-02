@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   return (
     <div>
       <SectionHeader
-        num="12"
+        num="14"
         title="Settings"
         description="Plug in any AI provider's API key -- every Generate button in the app (prompts, improver, bulk import classification) routes through whatever's configured here. Swap providers or rotate a key any time, no redeploy needed."
       />

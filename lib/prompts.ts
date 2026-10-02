@@ -65,7 +65,7 @@ ${opts.outputFormatSpec}
 Only <final_script> is the deliverable. Phases 1-3 are your reasoning, not part of the answer -- but do the work, don't jump straight to Phase 4.`;
 }
 
-function brandContext(brand: BrandConfig) {
+export function brandContext(brand: BrandConfig) {
   return `You are helping ${brand.nameField}, ${brand.occupation}.
 Niche: ${brand.niche}
 Sub-niches: ${brand.subniches.join(", ")}

@@ -19,7 +19,9 @@ const SECTIONS = [
   { href: "/analytics", label: "Analytics & Levels", num: "09" },
   { href: "/library", label: "Script Library", num: "10" },
   { href: "/improve", label: "Script Improver", num: "11" },
-  { href: "/settings", label: "Settings", num: "12" },
+  { href: "/carousels", label: "Carousel Studio", num: "12" },
+  { href: "/carousel-library", label: "Carousel Library", num: "13" },
+  { href: "/settings", label: "Settings", num: "14" },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
